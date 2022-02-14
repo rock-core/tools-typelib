@@ -316,7 +316,7 @@ module Typelib
         end
 
         def raw_each
-            return enum_for(:raw_each) if !block_given?
+            return enum_for(:raw_each) unless block_given?
 
             idx = 0
             do_each(true) do |el|

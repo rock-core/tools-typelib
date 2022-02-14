@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Typelib
     # Get the name for 'char'
     reg = Registry.new(false)
@@ -5,19 +7,21 @@ module Typelib
     CHAR_T = reg.get('/char')
     INT_BOOL_T = reg.get("/int#{reg.get('/bool').size * 8}_t")
 
-    convert_from_ruby TrueClass, '/bool' do |value, typelib_type|
+    convert_from_ruby TrueClass, "/bool" do |_value, typelib_type|
         Typelib.from_ruby(1, typelib_type)
     end
-    convert_from_ruby FalseClass, '/bool' do |value, typelib_type|
+
+    convert_from_ruby FalseClass, "/bool" do |_value, typelib_type|
         Typelib.from_ruby(0, typelib_type)
     end
-    convert_to_ruby '/bool' do |value|
+
+    convert_to_ruby "/bool" do |value|
         Typelib.to_ruby(value, INT_BOOL_T) != 0
     end
 
-    %w{uint8_t uint16_t uint32_t uint64_t
+    %w[uint8_t uint16_t uint32_t uint64_t
        int8_t int16_t int32_t int64_t
-       float double}.each do |numeric_type|
+       float double].each do |numeric_type|
         specialize "/std/vector</#{numeric_type}>" do
             def __element_to_ruby(element)
                 element.to_ruby
@@ -25,17 +29,19 @@ module Typelib
         end
     end
 
-    convert_from_ruby String, '/std/string' do |value, typelib_type|
+    convert_from_ruby String, "/std/string" do |value, typelib_type|
         typelib_type.wrap([value.length, value].pack("QA#{value.length}"))
     end
-    convert_to_ruby '/std/string', String do |value|
+
+    convert_to_ruby "/std/string", String do |value|
         value = value.to_byte_array[8..-1]
         if value.respond_to?(:force_encoding)
             value.force_encoding(Encoding.default_internal || __ENCODING__)
         end
         value
     end
-    specialize '/std/string' do
+
+    specialize "/std/string" do
         def to_str
             Typelib.to_ruby(self)
         end
@@ -44,7 +50,7 @@ module Typelib
             pp.text to_str
         end
 
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(_options = {})
             to_ruby
         end
 
@@ -55,7 +61,8 @@ module Typelib
             end
         end
     end
-    specialize '/std/vector<>' do
+
+    specialize "/std/vector<>" do
         include Typelib::ContainerType::StdVector
     end
 
@@ -78,11 +85,11 @@ module Typelib
     end
     convert_from_ruby String, "#{CHAR_T.name}[]" do |value, typelib_type|
         result = typelib_type.new
-        Type::from_string(result, value, true)
+        Type.from_string(result, value, true)
         result
     end
     convert_to_ruby "#{CHAR_T.name}[]", String do |value|
-        value = Type::to_string(value, true)
+        value = Type.to_string(value, true)
         if value.respond_to?(:force_encoding)
             value.force_encoding('ASCII')
         end
@@ -90,7 +97,7 @@ module Typelib
     end
     specialize "#{CHAR_T.name}[]" do
         def to_str
-            value = Type::to_string(self, true)
+            value = Type.to_string(self, true)
             if value.respond_to?(:force_encoding)
                 value.force_encoding('ASCII')
             end
@@ -99,11 +106,11 @@ module Typelib
     end
     convert_from_ruby String, "#{CHAR_T.name}*" do |value, typelib_type|
         result = typelib_type.new
-        Type::from_string(result, value, true)
+        Type.from_string(result, value, true)
         result
     end
     convert_to_ruby "#{CHAR_T.name}*", String do |value|
-        value = Type::to_string(value, true)
+        value = Type.to_string(value, true)
         if value.respond_to?(:force_encoding)
             value.force_encoding('ASCII')
         end
@@ -111,7 +118,7 @@ module Typelib
     end
     specialize "#{CHAR_T.name}*" do
         def to_str
-            value = Type::to_string(self, true)
+            value = Type.to_string(self, true)
             if value.respond_to?(:force_encoding)
                 value.force_encoding('ASCII')
             end

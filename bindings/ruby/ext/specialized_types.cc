@@ -547,7 +547,8 @@ static VALUE container_each(VALUE self, VALUE raw)
     Value value = rb2cxx::object<Value>(self);
     VALUE registry = value_get_registry(self);
     ContainerIterator iterator(registry, self, RTEST(raw));
-    dynamic_cast<Typelib::Container const&>(value.getType()).visit(value.getData(), iterator);
+    dynamic_cast<Typelib::Container const&>(value.getType())
+        .visit(value.getData(), iterator);
     return self;
 }
 
