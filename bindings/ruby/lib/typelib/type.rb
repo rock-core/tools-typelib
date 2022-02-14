@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 module Typelib
+    @zero_all_values = false
+
     class << self
         # Globally sets whether all values created with .new are to be
         # zeroed-out first
