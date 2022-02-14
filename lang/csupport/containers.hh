@@ -35,7 +35,7 @@ public:
     bool erase(void* ptr, Typelib::Value v) const;
     bool compare(void* ptr, void* other) const;
     void copy(void* dst, void* src) const;
-    bool visit(void* ptr, Typelib::ValueVisitor& visitor) const;
+    bool visit(void* ptr, Typelib::StrictValueVisitor& visitor) const;
     void delete_if_impl(void* ptr, DeleteIfPredicate& pred) const;
 
     MarshalOps::const_iterator dump(
@@ -71,7 +71,7 @@ public:
 
     void copy(void* dst, void* src) const;
 
-    bool visit(void* ptr, Typelib::ValueVisitor& visitor) const;
+    bool visit(void* ptr, Typelib::StrictValueVisitor& visitor) const;
 
     MarshalOps::const_iterator dump(
             void const* container_ptr, size_t element_count, Typelib::OutputStream& stream,

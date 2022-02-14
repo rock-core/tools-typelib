@@ -4,15 +4,16 @@
 
 namespace Typelib
 {
-    class ValueVisitor::TypeDispatch : public TypeVisitor
+    class StrictValueVisitor::TypeDispatch : public StrictTypeVisitor
     {
-        friend class ValueVisitor;
+        friend class StrictValueVisitor;
 
         // The dispatching stack
         std::list<uint8_t*> m_stack;
 
         // The ValueVisitor object
-        ValueVisitor& m_visitor;
+        StrictValueVisitor& m_visitor;
+
 
         template<typename T8, typename T16, typename T32, typename T64>
         bool integer_cast(uint8_t* value, Type const& t)
@@ -24,11 +25,17 @@ namespace Typelib
                 case 4: return m_visitor.visit_(*reinterpret_cast<T32*>(value));
                 case 8: return m_visitor.visit_(*reinterpret_cast<T64*>(value));
                 default:
-                         throw UnsupportedType(t, "unsupported integer size");
+                    throw UnsupportedType(t, "unsupported integer size");
             };
         }
 
     protected:
+        virtual bool visit_ (NullType const& type)
+        {
+            Value v(m_stack.back(), type);
+            return m_visitor.visit_(v, type);
+        }
+
         virtual bool visit_ (Numeric const& type)
         {
             uint8_t* value(m_stack.back());
@@ -96,22 +103,24 @@ namespace Typelib
         }
 
     public:
-        TypeDispatch(ValueVisitor& visitor)
+        TypeDispatch(StrictValueVisitor& visitor)
             : m_visitor(visitor) { }
 
         void apply(Value value)
         {
             m_stack.clear();
             m_stack.push_back( reinterpret_cast<uint8_t*>(value.getData()));
-            TypeVisitor::apply(value.getType());
+            StrictTypeVisitor::apply(value.getType());
             m_stack.pop_back();
         }
 
     };
 
-    bool ValueVisitor::visit_(Value const& v, Pointer const& t)
-    { return m_dispatcher->TypeVisitor::visit_(t); }
-    bool ValueVisitor::visit_(Value const& v, Array const& a)
+    bool StrictValueVisitor::visit_(Value const& v, Pointer const& t)
+    {
+        return m_dispatcher->StrictTypeVisitor::visit_(t);
+    }
+    bool StrictValueVisitor::visit_(Value const& v, Array const& a)
     {
         uint8_t*  base = static_cast<uint8_t*>(v.getData());
         m_dispatcher->m_stack.push_back(base);
@@ -121,27 +130,33 @@ namespace Typelib
         for (size_t i = 0; i < a.getDimension(); ++i)
         {
             element = base + array_type.getSize() * i;
-            if (! m_dispatcher->TypeVisitor::visit_(array_type))
+            if (! m_dispatcher->StrictTypeVisitor::visit_(array_type))
                 break;
         }
 
         m_dispatcher->m_stack.pop_back();
         return true;
     }
-    bool ValueVisitor::visit_(Value const& v, Container const& c)
-    { return c.visit(v.getData(), *this); }
-    bool ValueVisitor::visit_(Value const&, Compound const& c)
-    { return m_dispatcher->TypeVisitor::visit_(c); }
-    bool ValueVisitor::visit_(Value const&, Compound const& c, Field const& f)
-    { return m_dispatcher->TypeVisitor::visit_(c, f); }
-    bool ValueVisitor::visit_(Enum::integral_type&, Enum const& e)
-    { return m_dispatcher->TypeVisitor::visit_(e); }
-    bool ValueVisitor::visit_(Value const& v, OpaqueType const& t)
-    { return true; }
-    void ValueVisitor::dispatch(Value v)
+    bool StrictValueVisitor::visit_(Value const& v, Container const& c)
+    {
+        return c.visit(v.getData(), *this);
+    }
+    bool StrictValueVisitor::visit_(Value const&, Compound const& c)
+    {
+        return m_dispatcher->StrictTypeVisitor::visit_(c);
+    }
+    bool StrictValueVisitor::visit_(Value const&, Compound const& c, Field const& f)
+    {
+        return m_dispatcher->StrictTypeVisitor::visit_(c, f);
+    }
+    bool StrictValueVisitor::visit_(Enum::integral_type&, Enum const& e)
+    {
+        return true;
+    }
+    void StrictValueVisitor::dispatch(Value v)
     {
         m_dispatcher->m_stack.push_back(reinterpret_cast<uint8_t*>(v.getData()));
-        m_dispatcher->TypeVisitor::visit_(v.getType());
+        m_dispatcher->StrictTypeVisitor::visit_(v.getType());
         m_dispatcher->m_stack.pop_back();
     }
 
@@ -149,17 +164,21 @@ namespace Typelib
 
 namespace Typelib
 {
-    ValueVisitor::ValueVisitor(bool defval)
-       : m_defval(defval), m_dispatcher(new TypeDispatch(*this))
+    StrictValueVisitor::StrictValueVisitor()
+       : m_dispatcher(new TypeDispatch(*this))
     {
     }
-    ValueVisitor::~ValueVisitor()
+    StrictValueVisitor::~StrictValueVisitor()
     {
         delete m_dispatcher;
     }
-    void ValueVisitor::apply(Value v)
+    void StrictValueVisitor::apply(Value v)
     {
         m_dispatcher->apply(v);
+    }
+    ValueVisitor::ValueVisitor(bool defval)
+       : m_defval(defval)
+    {
     }
 
 }

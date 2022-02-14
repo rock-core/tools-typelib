@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE( test_marshalling_simple )
         memset(&a, 1, sizeof(A));
         a.a = 10000;
         a.b = 1000;
-        a.c = 100;
+        a.c = 'c';
         a.d = 10;
         vector<uint8_t> buffer = dump(Value(&a, type));
 
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE( test_marshalling_to_fd )
     memset(&a, 1, sizeof(A));
     a.a = 10000;
     a.b = 1000;
-    a.c = 100;
+    a.c = 'c';
     a.d = 10;
     dump(Value(&a, type), pipefd[1]);
 

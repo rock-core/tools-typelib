@@ -7,7 +7,7 @@ namespace
 {
     using namespace std;
     using namespace Typelib;
-    class TlbExportVisitor : public TypeVisitor
+    class TlbExportVisitor : public StrictTypeVisitor
     {
         ostream&  m_stream;
         string    m_indent;
@@ -109,7 +109,7 @@ namespace
         m_stream << "<compound name=\"" << xmlEscape(type.getName()) << "\" size=\"" << type.getSize() << "\" " << emitSourceID() << ">\n";
 
         { Indent indenter(m_indent);
-            TypeVisitor::visit_(type);
+            StrictTypeVisitor::visit_(type);
         }
 
         m_stream << m_indent << emitMetaData(type) << "\n";

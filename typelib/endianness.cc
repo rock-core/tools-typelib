@@ -56,6 +56,8 @@ namespace Typelib {
         return true;
     }
 
+    bool CompileEndianSwapVisitor::visit_ (NullType const& type)
+    { throw UnsupportedEndianSwap("null"); }
     bool CompileEndianSwapVisitor::visit_ (OpaqueType const& type)
     { throw UnsupportedEndianSwap("opaque"); }
     bool CompileEndianSwapVisitor::visit_ (Pointer const& type)
@@ -75,7 +77,7 @@ namespace Typelib {
         m_compiled.push_back(type.getIndirection().getSize());
 
         size_t current_size = m_compiled.size();
-        TypeVisitor::visit_(type);
+        StrictTypeVisitor::visit_(type);
 
         if (m_compiled.size() == current_size + 2 && m_compiled[current_size] == FLAG_SKIP)
         {
@@ -117,11 +119,17 @@ namespace Typelib {
         return true;
     }
 
+    bool CompileEndianSwapVisitor::visit_ (Compound const& type, const Typelib::Field&)
+    {
+        // Handled in the Compound callback directly
+        return true;
+    }
+
     void CompileEndianSwapVisitor::apply(Type const& type)
     {
         m_output_index = 0;
         m_compiled.clear();
-        TypeVisitor::apply(type);
+        StrictTypeVisitor::apply(type);
     }
 
     std::pair<size_t, std::vector<size_t>::const_iterator>

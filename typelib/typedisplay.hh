@@ -10,7 +10,7 @@ namespace Typelib
      * You can use <code>stream << type</code> and
      * <code>stream << type_display(type, indent)</code> instead
      */
-    class TypeDisplayVisitor : public TypeVisitor
+    class TypeDisplayVisitor : public StrictTypeVisitor
     {
         template<typename T>
         void display_compound(T const& type, char const* compound_name);

@@ -507,7 +507,7 @@ namespace Typelib
             : std::runtime_error("unknown container " + name) {}
     };
 
-    class ValueVisitor;
+    class StrictValueVisitor;
     class Value;
 
     /** Base type for variable-length sets */
@@ -549,7 +549,7 @@ namespace Typelib
         std::string kind() const;
         virtual void init(void* ptr) const = 0;
         virtual void destroy(void* ptr) const = 0;
-        virtual bool visit(void* ptr, ValueVisitor& visitor) const = 0;
+        virtual bool visit(void* ptr, StrictValueVisitor& visitor) const = 0;
 
         /** If true, this is a random access container and both the
          * getElement(int) and setElement(int) methods can be used

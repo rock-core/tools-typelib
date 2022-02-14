@@ -42,15 +42,54 @@ namespace Typelib
 
     /** A visitor object that can be used to discover the type
      * of a Value object */
-    class ValueVisitor
+    class StrictValueVisitor
     {
         class TypeDispatch;
         friend class TypeDispatch;
-        bool m_defval;
 
         TypeDispatch* m_dispatcher;
 
     protected:
+        virtual bool visit_ (char  &) = 0;
+        virtual bool visit_ (int8_t  &) = 0;
+        virtual bool visit_ (uint8_t &) = 0;
+        virtual bool visit_ (int16_t &) = 0;
+        virtual bool visit_ (uint16_t&) = 0;
+        virtual bool visit_ (int32_t &) = 0;
+        virtual bool visit_ (uint32_t&) = 0;
+        virtual bool visit_ (int64_t &) = 0;
+        virtual bool visit_ (uint64_t&) = 0;
+        virtual bool visit_ (float   &) = 0;
+        virtual bool visit_ (double  &) = 0;
+
+        virtual bool visit_ (Value const& v, NullType const& t) = 0;
+        virtual bool visit_ (Value const& v, OpaqueType const& t) = 0;
+
+        virtual bool visit_ (Value const& v, Pointer const& t);
+        virtual bool visit_ (Value const& v, Array const& a);
+        virtual bool visit_ (Value const& v, Container const& a);
+        virtual bool visit_ (Value const& v, Compound const& c);
+        virtual bool visit_ (Value const& v, Compound const& c, Field const& f);
+        virtual bool visit_ (Enum::integral_type& v, Enum const& e);
+
+    public:
+        StrictValueVisitor();
+        virtual ~StrictValueVisitor();
+
+        /** This is for internal use only. To visit a Value object, use apply */
+        virtual void dispatch(Value v);
+
+        void apply(Value v);
+    };
+
+    /** A visitor object that can be used to discover the type
+     * of a Value object */
+    class ValueVisitor : public StrictValueVisitor
+    {
+        bool m_defval;
+
+    protected:
+        virtual bool visit_ (char  &) { return m_defval; }
         virtual bool visit_ (int8_t  &) { return m_defval; }
         virtual bool visit_ (uint8_t &) { return m_defval; }
         virtual bool visit_ (int16_t &) { return m_defval; }
@@ -62,23 +101,13 @@ namespace Typelib
         virtual bool visit_ (float   &) { return m_defval; }
         virtual bool visit_ (double  &) { return m_defval; }
 
-        virtual bool visit_ (Value const& v, OpaqueType const& t);
-        virtual bool visit_ (Value const& v, Pointer const& t);
-        virtual bool visit_ (Value const& v, Array const& a);
-        virtual bool visit_ (Value const& v, Container const& a);
-        virtual bool visit_ (Value const& v, Compound const& c);
-        virtual bool visit_ (Value const& v, Compound const& c, Field const& f);
-        virtual bool visit_ (Enum::integral_type& v, Enum const& e);
+        virtual bool visit_ (Value const& v, NullType const& t) { return m_defval; }
+        virtual bool visit_ (Value const& v, OpaqueType const& t) { return m_defval; }
 
     public:
         ValueVisitor(bool defval = false);
-        virtual ~ValueVisitor();
-
-        /** This is for internal use only. To visit a Value object, use apply */
-        virtual void dispatch(Value v);
-
-        void apply(Value v);
     };
+
 
     /** Raised by value_cast when the type of a Value object
      * is not compatible with the wanted C type */

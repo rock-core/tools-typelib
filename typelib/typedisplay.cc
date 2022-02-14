@@ -38,7 +38,7 @@ bool TypeDisplayVisitor::visit_(Compound const& type)
     m_stream << "compound " << type.getName() << " [" << type.getSize() << "] {\n";
 
     { Indent indenter(m_indent);
-        TypeVisitor::visit_(type);
+        StrictTypeVisitor::visit_(type);
     }
 
     m_stream << m_indent
@@ -48,7 +48,7 @@ bool TypeDisplayVisitor::visit_(Compound const& type)
 bool TypeDisplayVisitor::visit_(Compound const& type, Field const& field)
 {
     m_stream << m_indent << "(+" << field.getOffset() << ") ";
-    TypeVisitor::visit_(type, field);
+    StrictTypeVisitor::visit_(type, field);
     m_stream << " " << field.getName() << std::endl;
     return true;
 }
@@ -98,7 +98,7 @@ bool TypeDisplayVisitor::visit_(Array const& type)
     m_stream << "array[" << type.getDimension() << "] of\n";
     { Indent indenter(m_indent);
         m_stream << m_indent;
-        TypeVisitor::visit_(type);
+        StrictTypeVisitor::visit_(type);
     }
     return true;
 }

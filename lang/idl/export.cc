@@ -69,7 +69,7 @@ namespace
         return ns;
     }
 
-    class IDLTypeIdentifierVisitor : public TypeVisitor
+    class IDLTypeIdentifierVisitor : public StrictTypeVisitor
     {
     public:
         IDLExport const& m_exporter;
@@ -95,7 +95,7 @@ namespace
         void apply(Type const& type)
         {
             m_namespace = getIDLAbsoluteNamespace(type.getNamespace(), m_exporter);
-            TypeVisitor::apply(type);
+            StrictTypeVisitor::apply(type);
             m_front = normalizeIDLName(m_front);
         }
     };
@@ -155,6 +155,10 @@ namespace
         return ::getIDLBase(type, m_exporter, field_name);
     }
 
+    bool IDLTypeIdentifierVisitor::visit_(NullType const& type)
+    {
+        throw UnsupportedType(type, "null types are not allowed in IDL");
+    }
     bool IDLTypeIdentifierVisitor::visit_(OpaqueType const& type)
     {
         if (m_exporter.marshalOpaquesAsAny())
@@ -167,8 +171,6 @@ namespace
 
         return true;
     }
-    bool IDLTypeIdentifierVisitor::visit_(NullType const& type)
-    { throw UnsupportedType(type, "null types are not supported for export in IDL, found " + type.getName()); }
     bool IDLTypeIdentifierVisitor::visit_(Container const& type)
     {
         if (type.getName() == "/std/string")
@@ -195,8 +197,10 @@ namespace
         return true;
     }
     bool IDLTypeIdentifierVisitor::visit_(Compound const& type)
-    { m_front = type.getBasename();
-        return true; }
+    {
+        m_front = type.getBasename();
+        return true;
+    }
     bool IDLTypeIdentifierVisitor::visit_(Numeric const& type)
     {
         m_namespace = "";
@@ -214,14 +218,18 @@ namespace
                 case 2: m_front += "short"; break;
                 case 4: m_front += "long"; break;
                 case 8: m_front += "long long"; break;
+                default:
+                    return false;
             }
         }
         else
         {
             if (type.getSize() == 4)
                 m_front = "float";
-            else
+            else if (type.getSize() == 8)
                 m_front = "double";
+            else
+                return false;
         }
         return true;
     }
@@ -242,7 +250,7 @@ namespace
     { m_front = type.getBasename();
         return true; }
 
-    class IDLExportVisitor : public TypeVisitor
+    class IDLExportVisitor : public StrictTypeVisitor
     {
     public:
         IDLExport const& m_exporter;
@@ -251,6 +259,7 @@ namespace
         string    m_namespace;
         std::map<std::string, Type const*>& m_exported_typedefs;
 
+        bool visit_(NullType const& type);
         bool visit_(OpaqueType const& type);
         bool visit_(Container const& type);
         bool visit_(Compound const& type);
@@ -277,7 +286,7 @@ namespace
         void apply(Type const& type)
         {
             setTargetNamespace(getIDLAbsoluteNamespace(type.getNamespace(), m_exporter));
-            TypeVisitor::apply(type);
+            StrictTypeVisitor::apply(type);
         }
     };
 
@@ -312,7 +321,7 @@ namespace
         m_stream << m_indent << "struct " << normalizeIDLName(type.getBasename()) << " {\n";
 
         { Indent indenter(m_indent);
-            TypeVisitor::visit_(type);
+            StrictTypeVisitor::visit_(type);
         }
 
         m_stream << m_indent
@@ -384,6 +393,10 @@ namespace
         m_exported_typedefs.insert(make_pair(type.getIndirection().getNamespace() + typedef_name, &type));
 
         return true;
+    }
+    bool IDLExportVisitor::visit_(NullType const& type)
+    {
+        throw UnsupportedType(type, "null types are not supported for export in IDL");
     }
     bool IDLExportVisitor::visit_(OpaqueType const& type)
     {

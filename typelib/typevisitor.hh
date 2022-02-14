@@ -17,22 +17,15 @@ namespace Typelib
         ~UnsupportedType() throw() { }
     };
 
-    /** Base class for type visitors
-     * Given a Type object, TypeVisitor::apply dispatches the
-     * casted type to the appropriate visit_ method
-     *
-     * The default visit_ methods either do nothing or visits the
-     * types recursively (for arrays, pointers and compound types)
-     */
-    class TypeVisitor
+    class StrictTypeVisitor
     {
     protected:
         bool dispatch(Type const& type);
 
-        virtual bool visit_ (NullType const& type);
-        virtual bool visit_ (OpaqueType const& type);
-        virtual bool visit_ (Numeric const& type);
-        virtual bool visit_ (Enum const& type);
+        virtual bool visit_ (NullType const& type) = 0;
+        virtual bool visit_ (OpaqueType const& type) = 0;
+        virtual bool visit_ (Numeric const& type) = 0;
+        virtual bool visit_ (Enum const& type) = 0;
 
         virtual bool visit_ (Pointer const& type);
         virtual bool visit_ (Array const& type);
@@ -42,8 +35,27 @@ namespace Typelib
         virtual bool visit_ (Compound const& type, Field const& field);
 
     public:
-        virtual ~TypeVisitor() {}
+        virtual ~StrictTypeVisitor() {}
         void apply(Type const& type);
+    };
+
+    /** Base class for type visitors
+     * Given a Type object, TypeVisitor::apply dispatches the
+     * casted type to the appropriate visit_ method
+     *
+     * The default visit_ methods either do nothing or visits the
+     * types recursively (for arrays, pointers and compound types)
+     */
+    class TypeVisitor : public StrictTypeVisitor
+    {
+    protected:
+        virtual bool visit_ (NullType const& type);
+        virtual bool visit_ (OpaqueType const& type);
+        virtual bool visit_ (Numeric const& type);
+        virtual bool visit_ (Enum const& type);
+
+    public:
+        virtual ~TypeVisitor() {}
     };
 }
 

@@ -13,7 +13,7 @@ namespace Typelib
     };
 
     /* This visitor swaps the endianness of the given value in-place */
-    class EndianSwapVisitor : public ValueVisitor
+    class EndianSwapVisitor : public StrictValueVisitor
     {
     protected:
         bool visit_ (int8_t  & value) { value = Endian::swap(value); return true; }
@@ -27,6 +27,8 @@ namespace Typelib
         bool visit_ (float   & value) { value = Endian::swap(value); return true; }
         bool visit_ (double  & value) { value = Endian::swap(value); return true; }
         bool visit_ (Value const& v, Pointer const& t) { throw UnsupportedEndianSwap("pointers"); }
+        bool visit_ (Value const& v, OpaqueType const& t) { throw UnsupportedEndianSwap("opaque"); }
+        bool visit_ (Value const& v, NullType const& t) { throw UnsupportedEndianSwap("null"); }
         bool visit_ (Enum::integral_type& v, Enum const& e) { v = Endian::swap(v); return true; }
     };
 
@@ -37,7 +39,7 @@ namespace Typelib
         swapper.apply(v);
     }
 
-    class CompileEndianSwapVisitor : public TypeVisitor
+    class CompileEndianSwapVisitor : public StrictTypeVisitor
     {
         // The current place into the output: the next element which are to be
         // byte-swapped will be written at this index in the output data
@@ -76,12 +78,14 @@ namespace Typelib
 
     protected:
         void skip(int skip_size);
+        bool visit_ (NullType const& type);
         bool visit_ (OpaqueType const& type);
         bool visit_ (Numeric const& type);
         bool visit_ (Enum const& type);
         bool visit_ (Pointer const& type);
         bool visit_ (Array const& type);
         bool visit_ (Compound const& type);
+        bool visit_ (Compound const& type, const Typelib::Field&);
         bool visit_ (Container const& type);
 
     public:

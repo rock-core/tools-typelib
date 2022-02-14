@@ -258,7 +258,7 @@ void Vector::copy(std::vector<uint8_t>* dst_ptr, size_t dst_idx, std::vector<uin
 }
 
 
-bool Vector::visit(void* ptr, ValueVisitor& visitor) const
+bool Vector::visit(void* ptr, StrictValueVisitor& visitor) const
 {
     std::vector<uint8_t>* vector_ptr =
         reinterpret_cast< std::vector<uint8_t>* >(ptr);
@@ -445,7 +445,7 @@ void String::copy(void* dst, void* src) const
     *dst_ptr = *src_ptr;
 }
 
-bool String::visit(void* ptr, ValueVisitor& visitor) const
+bool String::visit(void* ptr, StrictValueVisitor& visitor) const
 {
     std::string* string_ptr =
         reinterpret_cast< std::string* >(ptr);

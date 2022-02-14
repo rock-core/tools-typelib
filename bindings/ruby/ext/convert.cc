@@ -24,6 +24,14 @@ bool RubyGetter::visit_ (uint64_t& value) { m_value = ULL2NUM(value); return fal
 bool RubyGetter::visit_ (float   & value) { m_value = rb_float_new(value); return false; }
 bool RubyGetter::visit_ (double  & value) { m_value = rb_float_new(value); return false; }
 
+bool RubyGetter::visit_(Value const& v, NullType const& p)
+{
+#   ifdef VERBOSE
+    fprintf(stderr, "%p: wrapping from RubyGetter::visit_(null)\n", v.getData());
+#   endif
+    m_value = cxx2rb::value_wrap(v, m_registry, m_parent);
+    return false;
+}
 bool RubyGetter::visit_(Value const& v, Pointer const& p)
 {
 #   ifdef VERBOSE
@@ -70,7 +78,7 @@ bool RubyGetter::visit_(Enum::integral_type& v, Enum const& e)
     return false;
 }
 
-RubyGetter::RubyGetter() : ValueVisitor(false) {}
+RubyGetter::RubyGetter() : StrictValueVisitor() {}
 RubyGetter::~RubyGetter() { m_value = Qnil; m_registry = Qnil; }
 
 VALUE RubyGetter::apply(Typelib::Value value, VALUE registry, VALUE parent)
@@ -79,7 +87,7 @@ VALUE RubyGetter::apply(Typelib::Value value, VALUE registry, VALUE parent)
     m_value    = Qnil;
     m_parent   = parent;
 
-    ValueVisitor::apply(value);
+    StrictValueVisitor::apply(value);
     return m_value;
 }
 
@@ -117,6 +125,10 @@ bool RubySetter::visit_(Value const& v, Compound const& c)
 {
     throw UnsupportedType(v.getType(), "no conversion to compound");
 }
+bool RubySetter::visit_(Value const& v, NullType const& c)
+{
+    throw UnsupportedType(v.getType(), "no conversion to null types");
+}
 bool RubySetter::visit_(Value const& v, OpaqueType const& c)
 {
     throw UnsupportedType(v.getType(), "no conversion to opaque types");
@@ -131,13 +143,13 @@ bool RubySetter::visit_(Enum::integral_type& v, Enum const& e)
     return false;
 }
 
-RubySetter::RubySetter() : ValueVisitor(false) {}
+RubySetter::RubySetter() : StrictValueVisitor() {}
 RubySetter::~RubySetter() { m_value = Qnil; }
 
 VALUE RubySetter::apply(Value value, VALUE new_value)
 {
     m_value = new_value;
-    ValueVisitor::apply(value);
+    StrictValueVisitor::apply(value);
     return new_value;
 }
 

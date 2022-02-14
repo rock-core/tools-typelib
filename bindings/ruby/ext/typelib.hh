@@ -125,7 +125,7 @@ namespace typelib_ruby {
         Enum::integral_type enum_value(VALUE rb_value, Enum const& e);
     }
 
-    class RubyGetter : public Typelib::ValueVisitor
+    class RubyGetter : public Typelib::StrictValueVisitor
     {
     protected:
         VALUE m_value;
@@ -143,6 +143,7 @@ namespace typelib_ruby {
         bool visit_ (float   & value);
         bool visit_ (double  & value);
 
+        bool visit_(Typelib::Value const& v, Typelib::NullType const& p);
         bool visit_(Typelib::Value const& v, Typelib::Pointer const& p);
         bool visit_(Typelib::Value const& v, Typelib::Array const& a);
         bool visit_(Typelib::Value const& v, Typelib::Compound const& c);
@@ -157,7 +158,7 @@ namespace typelib_ruby {
         VALUE apply(Typelib::Value value, VALUE registry, VALUE parent);
     };
 
-    class RubySetter : public Typelib::ValueVisitor
+    class RubySetter : public Typelib::StrictValueVisitor
     {
     protected:
         VALUE m_value;
@@ -175,6 +176,7 @@ namespace typelib_ruby {
 
         bool visit_(Typelib::Value const& v, Typelib::Pointer const& p);
         bool visit_(Typelib::Value const& v, Typelib::Array const& a);
+        bool visit_(Typelib::Value const& v, Typelib::NullType const& a);
         bool visit_(Typelib::Value const& v, Typelib::Compound const& c);
         bool visit_(Typelib::Value const& v, Typelib::Container const& c);
         bool visit_(Typelib::Value const& v, Typelib::OpaqueType const& c);

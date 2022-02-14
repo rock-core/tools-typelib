@@ -2,39 +2,7 @@
 
 namespace Typelib
 {
-    bool TypeVisitor::visit_ ( NullType const& type )
-    { throw NullTypeFound(type); }
-    bool TypeVisitor::visit_ (OpaqueType const& type)
-    { return true; }
-    bool TypeVisitor::visit_  (Numeric const& type)
-    { return true; }
-    bool TypeVisitor::visit_  (Enum const& type)
-    { return true; }
-
-    bool TypeVisitor::visit_  (Pointer const& type)
-    { return dispatch(type.getIndirection()); }
-    bool TypeVisitor::visit_  (Array const& type)
-    { return dispatch(type.getIndirection()); }
-    bool TypeVisitor::visit_  (Container const& type)
-    { return dispatch(type.getIndirection()); }
-
-    bool TypeVisitor::visit_  (Compound const& type)
-    {
-        typedef Compound::FieldList Fields;
-        Fields const& fields(type.getFields());
-        Fields::const_iterator const end = fields.end();
-
-        for (Fields::const_iterator it = fields.begin(); it != end; ++it)
-        {
-            if (! visit_(type, *it))
-                return false;
-        }
-        return true;
-    }
-    bool TypeVisitor::visit_  (Compound const& type, Field const& field)
-    { return dispatch(field.getType()); }
-
-    bool TypeVisitor::dispatch(Type const& type)
+    bool StrictTypeVisitor::dispatch(Type const& type)
     {
         switch(type.getCategory())
         {
@@ -59,7 +27,41 @@ namespace Typelib
         }
     }
 
-    void TypeVisitor::apply(Type const& type)
+    bool StrictTypeVisitor::visit_(Pointer const& type)
+    { return dispatch(type.getIndirection()); }
+    bool StrictTypeVisitor::visit_(Array const& type)
+    { return dispatch(type.getIndirection()); }
+    bool StrictTypeVisitor::visit_(Container const& type)
+    { return dispatch(type.getIndirection()); }
+    bool StrictTypeVisitor::visit_(Compound const& type)
+    {
+        typedef Compound::FieldList Fields;
+        Fields const& fields(type.getFields());
+        Fields::const_iterator const end = fields.end();
+
+        for (Fields::const_iterator it = fields.begin(); it != end; ++it)
+        {
+            if (! visit_(type, *it))
+                return false;
+        }
+        return true;
+    }
+    bool StrictTypeVisitor::visit_(Compound const& type, Field const& field)
+    {
+        return dispatch(field.getType());
+    }
+
+    void StrictTypeVisitor::apply(Type const& type)
     { dispatch(type); }
+
+    bool TypeVisitor::visit_(NullType const& type)
+    { throw NullTypeFound(type); }
+    bool TypeVisitor::visit_(OpaqueType const& type)
+    { return true; }
+    bool TypeVisitor::visit_(Numeric const& type)
+    { return true; }
+    bool TypeVisitor::visit_(Enum const& type)
+    { return true; }
+
 }
 

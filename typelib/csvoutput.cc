@@ -12,7 +12,7 @@ namespace
     using namespace Typelib;
     using namespace std;
     using boost::join;
-    class HeaderVisitor : public TypeVisitor
+    class HeaderVisitor : public StrictTypeVisitor
     {
         list<string> m_name;
         list<string> m_headers;
@@ -24,6 +24,7 @@ namespace
             m_headers.push_back(name);
         }
 
+        bool visit_ (NullType const& type) { output(); return true; }
         bool visit_ (OpaqueType const& type) { output(); return true; }
         bool visit_ (Numeric const&) { output(); return true; }
         bool visit_ (Enum const&) { output(); return true; }
@@ -32,7 +33,7 @@ namespace
         {
             m_name.push_front("*(");
             m_name.push_back(")");
-            TypeVisitor::visit_(type);
+            StrictTypeVisitor::visit_(type);
             m_name.pop_front();
             m_name.pop_back();
             return true;
@@ -47,7 +48,7 @@ namespace
             for (size_t i = 0; i < type.getDimension(); ++i)
             {
                 *count = boost::lexical_cast<string>(i);
-                TypeVisitor::visit_(type);
+                StrictTypeVisitor::visit_(type);
             }
             m_name.pop_back();
             m_name.pop_back();
@@ -58,31 +59,32 @@ namespace
         bool visit_ (Compound const& type)
         {
             m_name.push_back(".");
-            TypeVisitor::visit_(type);
+            StrictTypeVisitor::visit_(type);
             m_name.pop_back();
             return true;
         }
         bool visit_ (Compound const& type, Field const& field)
         {
             m_name.push_back(field.getName());
-            TypeVisitor::visit_(type, field);
+            StrictTypeVisitor::visit_(type, field);
             m_name.pop_back();
             return true;
         }
 
-        using TypeVisitor::visit_;
+        using StrictTypeVisitor::visit_;
+
     public:
         list<string> apply(Type const& type, std::string const& basename)
         {
             m_headers.clear();
             m_name.clear();
             m_name.push_back(basename);
-            TypeVisitor::apply(type);
+            StrictTypeVisitor::apply(type);
             return m_headers;
         }
     };
 
-    class LineVisitor : public ValueVisitor
+    class LineVisitor : public StrictValueVisitor
     {
         list<string>  m_output;
         bool m_char_as_numeric;
@@ -94,8 +96,13 @@ namespace
             m_output.push_back(boost::lexical_cast<string>(value));
             return true;
         }
-        using ValueVisitor::visit_;
-        bool visit_ (Value value, OpaqueType const& type)
+        using StrictValueVisitor::visit_;
+        bool visit_ (Value const& value, NullType const& type)
+        {
+            display("<" + type.getName() + ">");
+            return true;
+        }
+        bool visit_ (Value const& value, OpaqueType const& type)
         {
             display("<" + type.getName() + ">");
             return true;
@@ -135,7 +142,7 @@ namespace
         {
             m_output.clear();
             m_char_as_numeric = char_as_numeric;
-            ValueVisitor::apply(value);
+            StrictValueVisitor::apply(value);
             return m_output;
         }
     };
