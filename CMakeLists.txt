@@ -16,6 +16,7 @@ FIND_PACKAGE ( Threads REQUIRED )
 # warning
 cmake_policy(SET CMP0007 NEW)
 add_compile_options(-Werror=return-type)
+add_compile_options(-Werror=switch)
 
 # make the clang-based importer optional for now. the option is planned to be
 # removed in the future, after using the new importer as default.
