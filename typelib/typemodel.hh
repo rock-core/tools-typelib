@@ -81,6 +81,7 @@ namespace Typelib
             Compound,
             Opaque,
             Container,
+            Character,
             NumberOfValidCategories
         };
 
@@ -274,6 +275,20 @@ namespace Typelib
         virtual std::set<Type const*> dependsOn() const { return std::set<Type const*>(); }
         virtual bool do_compare(Type const& other, bool equality, std::map<Type const*, Type const*>& stack) const;
         virtual Type* do_merge(Registry& registry, RecursionStack& stack) const { return new OpaqueType(*this); }
+    };
+
+    /** Characters */
+    class Character : public Type
+    {
+    public:
+        /** Creates a basic type from \c name, \c size and \c category */
+        Character(const std::string& name, size_t size);
+
+        virtual std::set<Type const*> dependsOn() const { return std::set<Type const*>(); }
+
+    private:
+        virtual bool do_compare(Type const& other, bool equality, RecursionStack& stack) const;
+        virtual Type* do_merge(Registry& registry, RecursionStack& stack) const;
     };
 
     /** Numeric values (integer, unsigned integer and floating point) */

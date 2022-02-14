@@ -24,7 +24,18 @@ namespace Typelib {
         }
     }
 
+    bool CompileEndianSwapVisitor::visit_ (Character const& type)
+    {
+        return handleSimpleType(type);
+    }
+
     bool CompileEndianSwapVisitor::visit_ (Numeric const& type)
+    {
+        return handleSimpleType(type);
+    }
+
+
+    bool CompileEndianSwapVisitor::handleSimpleType(Type const& type)
     {
         switch(type.getSize())
         {
@@ -51,9 +62,7 @@ namespace Typelib {
 
     bool CompileEndianSwapVisitor::visit_ (Enum const& type)
     {
-        for (int i = SizeOfEnum - 1; i >= 0; --i)
-            m_compiled.push_back(m_output_index + i);
-        return true;
+        return handleSimpleType(type);
     }
 
     bool CompileEndianSwapVisitor::visit_ (NullType const& type)

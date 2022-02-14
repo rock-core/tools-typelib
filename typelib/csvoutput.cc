@@ -1,7 +1,6 @@
 #include "csvoutput.hh"
 #include "value.hh"
 #include "typevisitor.hh"
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/join.hpp>
 
 using namespace Typelib;
@@ -27,6 +26,7 @@ namespace
         bool visit_ (NullType const& type) { output(); return true; }
         bool visit_ (OpaqueType const& type) { output(); return true; }
         bool visit_ (Numeric const&) { output(); return true; }
+        bool visit_ (Character const&) { output(); return true; }
         bool visit_ (Enum const&) { output(); return true; }
 
         bool visit_ (Pointer const& type)
@@ -47,7 +47,7 @@ namespace
             --(--count);
             for (size_t i = 0; i < type.getDimension(); ++i)
             {
-                *count = boost::lexical_cast<string>(i);
+                *count = std::to_string(i);
                 StrictTypeVisitor::visit_(type);
             }
             m_name.pop_back();
@@ -87,13 +87,22 @@ namespace
     class LineVisitor : public StrictValueVisitor
     {
         list<string>  m_output;
-        bool m_char_as_numeric;
 
     protected:
+        bool display(std::string const& value)
+        {
+            m_output.push_back(value);
+            return true;
+        }
+        bool display(char value)
+        {
+            m_output.push_back(std::to_string(value));
+            return true;
+        }
         template<typename T>
         bool display(T value)
         {
-            m_output.push_back(boost::lexical_cast<string>(value));
+            m_output.push_back(std::to_string(value));
             return true;
         }
         using StrictValueVisitor::visit_;
@@ -107,19 +116,16 @@ namespace
             display("<" + type.getName() + ">");
             return true;
         }
+        bool visit_ (char  & value) {
+            return display(value);
+        }
         bool visit_ (int8_t  & value)
         {
-            if (m_char_as_numeric)
-                return display<int>(value);
-            else
-                return display(value);
+            return display<int>(value);
         }
         bool visit_ (uint8_t & value)
         {
-            if (m_char_as_numeric)
-                return display<int>(value);
-            else
-                return display(value);
+            return display<unsigned int>(value);
         }
         bool visit_ (int16_t & value) { return display(value); }
         bool visit_ (uint16_t& value) { return display(value); }
@@ -138,10 +144,9 @@ namespace
         }
 
     public:
-        list<string> apply(Value const& value, bool char_as_numeric)
+        list<string> apply(Value const& value)
         {
             m_output.clear();
-            m_char_as_numeric = char_as_numeric;
             StrictValueVisitor::apply(value);
             return m_output;
         }
@@ -149,8 +154,8 @@ namespace
 }
 
 
-CSVOutput::CSVOutput(Type const& type, std::string const& sep, bool char_as_numeric = true)
-    : m_type(type), m_separator(sep), m_char_as_numeric(char_as_numeric) {}
+CSVOutput::CSVOutput(Type const& type, std::string const& sep)
+    : m_type(type), m_separator(sep) {}
 
 /** Displays the header */
 void CSVOutput::header(std::ostream& out, std::string const& basename)
@@ -162,6 +167,6 @@ void CSVOutput::header(std::ostream& out, std::string const& basename)
 void CSVOutput::display(std::ostream& out, void* value)
 {
     LineVisitor visitor;
-    out << join(visitor.apply( Value(value, m_type), m_char_as_numeric ), m_separator );
+    out << join(visitor.apply( Value(value, m_type)), m_separator );
 }
 

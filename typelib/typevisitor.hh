@@ -24,6 +24,7 @@ namespace Typelib
 
         virtual bool visit_ (NullType const& type) = 0;
         virtual bool visit_ (OpaqueType const& type) = 0;
+        virtual bool visit_ (Character const& type) = 0;
         virtual bool visit_ (Numeric const& type) = 0;
         virtual bool visit_ (Enum const& type) = 0;
 
@@ -51,6 +52,7 @@ namespace Typelib
     protected:
         virtual bool visit_ (NullType const& type);
         virtual bool visit_ (OpaqueType const& type);
+        virtual bool visit_ (Character const& type);
         virtual bool visit_ (Numeric const& type);
         virtual bool visit_ (Enum const& type);
 

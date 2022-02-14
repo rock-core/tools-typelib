@@ -543,6 +543,12 @@ MemoryLayout::Ops::const_iterator MemoryLayout::skipBlock(
     return end;
 }
 
+bool MemLayout::Visitor::visit_ (Character const& type)
+{
+    ops.pushMemcpy(type.getSize());
+    return true;
+}
+
 bool MemLayout::Visitor::visit_ (Numeric const& type)
 {
     ops.pushMemcpy(type.getSize());

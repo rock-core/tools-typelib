@@ -175,6 +175,14 @@ namespace
         { reinterpret_cast<const xmlChar*>("float"), Numeric::Float },
         { 0, Numeric::SInt }
     };
+    Type const* load_char(TypeNode const& node, Factory& factory)
+    {
+        size_t      size = getAttribute<size_t>(node.xml, "size");
+
+        Type* type = new Character(node.name, size);
+        factory.insert(node, type);
+        return type;
+    }
     Type const* load_numeric(TypeNode const& node, Factory& factory)
     {
         NumericCategory category = getCategoryFromNode
@@ -287,6 +295,7 @@ namespace
 
     NodeCategories node_categories[] = {
         { reinterpret_cast<const xmlChar*>("alias"),     load_alias },
+        { reinterpret_cast<const xmlChar*>("char"),      load_char },
         { reinterpret_cast<const xmlChar*>("numeric"),   load_numeric },
         { reinterpret_cast<const xmlChar*>("null"),      load_null },
         { reinterpret_cast<const xmlChar*>("opaque"),    load_opaque },

@@ -16,6 +16,7 @@ namespace Typelib
     class EndianSwapVisitor : public StrictValueVisitor
     {
     protected:
+        bool visit_ (char  & value) { value = Endian::swap(value); return true; }
         bool visit_ (int8_t  & value) { value = Endian::swap(value); return true; }
         bool visit_ (uint8_t & value) { value = Endian::swap(value); return true; }
         bool visit_ (int16_t & value) { value = Endian::swap(value); return true; }
@@ -80,6 +81,7 @@ namespace Typelib
         void skip(int skip_size);
         bool visit_ (NullType const& type);
         bool visit_ (OpaqueType const& type);
+        bool visit_ (Character const& type);
         bool visit_ (Numeric const& type);
         bool visit_ (Enum const& type);
         bool visit_ (Pointer const& type);
@@ -87,6 +89,8 @@ namespace Typelib
         bool visit_ (Compound const& type);
         bool visit_ (Compound const& type, const Typelib::Field&);
         bool visit_ (Container const& type);
+
+        bool handleSimpleType(Type const& type);
 
     public:
         ~CompileEndianSwapVisitor() { }

@@ -24,6 +24,7 @@ namespace Typelib
         bool visit_(Compound const& type);
         bool visit_(Compound const& type, Field const& field);
 
+        bool visit_(Character const& type);
         bool visit_(Numeric const& type);
         bool visit_(Enum const& type);
 

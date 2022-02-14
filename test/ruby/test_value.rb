@@ -30,13 +30,11 @@ class TC_Value < Minitest::Test
         assert_equal(0, int.to_ruby)
 
         str = CXXRegistry.new.build("/char[20]").new
-        base_val = if ?a.respond_to?(:ord) then ?a.ord
-                   else ?a
-                   end
-        20.times do |i|
-            str[i] = base_val + i
-        end
-        assert_kind_of(String, str.to_ruby)
+
+        expected = "abcdefghijklmnopqrst"
+        20.times { |i| str[i] = expected[i, 1] }
+        assert_kind_of String, str.to_ruby
+        assert_equal expected, str.to_ruby
     end
 
     def test_wrapping_a_buffer_should_call_typelib_initialize
@@ -155,7 +153,7 @@ class TC_Value < Minitest::Test
         a2 = a_type.wrap a_pattern.reverse
         a1.a = a2.a = 10
         a1.b = a2.b = 20
-        a1.c = a2.c = 30
+        a1.c = a2.c = "x"
         a1.d = a2.d = 40
         assert_equal(a1, a2)
         assert(!a1.eql?(a2))
@@ -196,8 +194,8 @@ class TC_Value < Minitest::Test
         a = make_registry.get("ADef")
         # The following line will lead to valgrind complaining. This is
         # harmless: we access the attribute values before we assign them.
-        a = a.new a: 10, b: 20, c: 30, d: 40
-        assert_equal([10, 20, 30, 40], a.to_byte_array.unpack("Qicxs"))
+        a = a.new a: 10, b: 20, c: "x", d: 40
+        assert_equal([10, 20, "x".ord, 40], a.to_byte_array.unpack("Qicxs"))
     end
 
     def test_string_handling
@@ -301,7 +299,7 @@ class TC_Value < Minitest::Test
         v1.zero!
         v0.a.a = 20
         v0.a.b = 60
-        v0.a.c = 4
+        v0.a.c = "x"
         v0.a.d = 30
         v0.x = 230
         assert !v1.memory_eql?(v0)

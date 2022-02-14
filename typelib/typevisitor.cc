@@ -8,6 +8,8 @@ namespace Typelib
         {
             case Type::NullType:
                 return visit_ ( dynamic_cast<NullType const&>(type) );
+            case Type::Character:
+                return visit_( dynamic_cast<Character const&>(type) );
             case Type::Numeric:
                 return visit_( dynamic_cast<Numeric const&>(type) );
             case Type::Enum:
@@ -59,6 +61,8 @@ namespace Typelib
     bool TypeVisitor::visit_(OpaqueType const& type)
     { return true; }
     bool TypeVisitor::visit_(Numeric const& type)
+    { return true; }
+    bool TypeVisitor::visit_(Character const& type)
     { return true; }
     bool TypeVisitor::visit_(Enum const& type)
     { return true; }

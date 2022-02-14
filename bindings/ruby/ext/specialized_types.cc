@@ -465,7 +465,12 @@ static VALUE container_clear(VALUE self)
 static Typelib::Value container_element(uint64_t* buffer10, Type const& element_t, VALUE obj)
 {
     Typelib::Value element_v;
-    if (element_t.getCategory() == Type::Numeric && sizeof(int64_t) * 10 >= element_t.getSize())
+    if (element_t.getCategory() == Type::Character)
+    {
+        element_v = Value(buffer10, element_t);
+        typelib_from_ruby(element_v, obj);
+    }
+    else if (element_t.getCategory() == Type::Numeric && sizeof(int64_t) * 10 >= element_t.getSize())
     {
         // Special case: allow the caller to use Ruby numeric directly. This is
         // way faster if a lot of insertions need to be done
@@ -719,6 +724,7 @@ void typelib_ruby::Typelib_init_specialized_types()
 
     cOpaque    = rb_define_class_under(mTypelib, "OpaqueType", cType);
     cNull      = rb_define_class_under(mTypelib, "NullType", cType);
+    cCharacter = rb_define_class_under(mTypelib, "CharacterType", cType);
 
     cIndirect  = rb_define_class_under(mTypelib, "IndirectType", cType);
     rb_define_singleton_method(cIndirect, "deference",    RUBY_METHOD_FUNC(indirect_type_deference), 0);

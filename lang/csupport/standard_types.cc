@@ -1,9 +1,10 @@
 #include "standard_types.hh"
 #include "containers.hh"
-#include <boost/lexical_cast.hpp>
 #include "typelib/typename.hh"
 #include <iostream>
+
 using namespace Typelib;
+using std::to_string;
 
 static void addStandardTypes(Typelib::Registry& r)
 {
@@ -16,29 +17,19 @@ static void addStandardTypes(Typelib::Registry& r)
     static const int sizes[] = { 1, 2, 4, 8 };
     for (size_t i = 0; i < sizeof(sizes)/sizeof(sizes[0]); ++i)
     {
-        std::string suffix = "int" + boost::lexical_cast<std::string>(sizes[i] * 8) + "_t";
+        std::string suffix = "int" + to_string(sizes[i] * 8) + "_t";
         r.add(new Numeric("/"  + suffix, sizes[i], Numeric::SInt));
         r.add(new Numeric("/u" + suffix, sizes[i], Numeric::UInt));
     }
 
-    std::string normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<signed char>::digits + 1) + "_t";
-    r.alias(normalized_type_name, "/signed char");
-    if (std::numeric_limits<char>::is_signed)
-        r.alias(normalized_type_name, "/char");
-    normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<signed char>::digits + 1) + "_t";
-    if (!std::numeric_limits<char>::is_signed)
-        r.alias(normalized_type_name, "/char");
-    r.alias(normalized_type_name, "/unsigned char");
+    std::string normalized_type_name = "/int8_t";
+    r.alias("/int8_t", "/signed char");
+    r.alias("/uint8_t", "/unsigned char");
 
-    if(std::numeric_limits<wchar_t>::is_signed)
-    {
-        normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<wchar_t>::digits + 1) + "_t";
-    } else {
-        normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<wchar_t>::digits) + "_t";
-    }
-    r.alias(normalized_type_name, "/wchar_t");
+    r.add(new Character("/char8_t", 1));
+    r.alias("/char8_t", "/char");
 
-    normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<short int>::digits + 1) + "_t";
+    normalized_type_name = "/int" + to_string(std::numeric_limits<short int>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/signed short int");
     r.alias(normalized_type_name, "/signed int short");
     r.alias(normalized_type_name, "/int signed short");
@@ -48,7 +39,7 @@ static void addStandardTypes(Typelib::Registry& r)
     r.alias(normalized_type_name, "/short signed");
     r.alias(normalized_type_name, "/short");
     r.alias(normalized_type_name, "/short int");
-    normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<short int>::digits + 1) + "_t";
+    normalized_type_name = "/uint" + to_string(std::numeric_limits<short int>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/short unsigned int");
     r.alias(normalized_type_name, "/short int unsigned");
     r.alias(normalized_type_name, "/int short unsigned");
@@ -56,17 +47,17 @@ static void addStandardTypes(Typelib::Registry& r)
     r.alias(normalized_type_name, "/short unsigned");
     r.alias(normalized_type_name, "/unsigned short");
 
-    normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<int>::digits + 1) + "_t";
+    normalized_type_name = "/int" + to_string(std::numeric_limits<int>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/signed int");
     r.alias(normalized_type_name, "/signed");
     r.alias(normalized_type_name, "/int signed");
     r.alias(normalized_type_name, "/int");
-    normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<int>::digits + 1) + "_t";
+    normalized_type_name = "/uint" + to_string(std::numeric_limits<int>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/unsigned int");
     r.alias(normalized_type_name, "/unsigned");
     r.alias(normalized_type_name, "/int unsigned");
 
-    normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<long>::digits + 1) + "_t";
+    normalized_type_name = "/int" + to_string(std::numeric_limits<long>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/signed long int");
     r.alias(normalized_type_name, "/signed int long");
     r.alias(normalized_type_name, "/int signed long");
@@ -76,7 +67,7 @@ static void addStandardTypes(Typelib::Registry& r)
     r.alias(normalized_type_name, "/long signed");
     r.alias(normalized_type_name, "/long");
     r.alias(normalized_type_name, "/long int");
-    normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<long>::digits + 1) + "_t";
+    normalized_type_name = "/uint" + to_string(std::numeric_limits<long>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/long unsigned int");
     r.alias(normalized_type_name, "/long int unsigned");
     r.alias(normalized_type_name, "/int long unsigned");
@@ -84,7 +75,7 @@ static void addStandardTypes(Typelib::Registry& r)
     r.alias(normalized_type_name, "/long unsigned");
     r.alias(normalized_type_name, "/unsigned long");
 
-    normalized_type_name = "/int" + boost::lexical_cast<std::string>(std::numeric_limits<long long>::digits + 1) + "_t";
+    normalized_type_name = "/int" + to_string(std::numeric_limits<long long>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/signed long long int");
     r.alias(normalized_type_name, "/signed long int long");
     r.alias(normalized_type_name, "/signed int long long");
@@ -99,7 +90,7 @@ static void addStandardTypes(Typelib::Registry& r)
     r.alias(normalized_type_name, "/long int long");
     r.alias(normalized_type_name, "/int long long");
     r.alias(normalized_type_name, "/long long");
-    normalized_type_name = "/uint" + boost::lexical_cast<std::string>(std::numeric_limits<long long>::digits + 1) + "_t";
+    normalized_type_name = "/uint" + to_string(std::numeric_limits<long long>::digits + 1) + "_t";
     r.alias(normalized_type_name, "/unsigned long long int");
     r.alias(normalized_type_name, "/unsigned long int long");
     r.alias(normalized_type_name, "/unsigned int long long");
@@ -126,6 +117,6 @@ void Typelib::CXX::addStandardTypes(Typelib::Registry& registry)
     if (!registry.has("/bool"))
         ::addStandardTypes(registry);
     if (!registry.has("/std/string"))
-        registry.add(new String(*registry.get("/int8_t")));
+        registry.add(new String(*registry.get("/char8_t")));
 }
 

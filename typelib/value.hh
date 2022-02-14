@@ -89,6 +89,8 @@ namespace Typelib
         bool m_defval;
 
     protected:
+        using StrictValueVisitor::visit_;
+
         virtual bool visit_ (char  &) { return m_defval; }
         virtual bool visit_ (int8_t  &) { return m_defval; }
         virtual bool visit_ (uint8_t &) { return m_defval; }

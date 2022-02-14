@@ -249,6 +249,13 @@ namespace Typelib
     Type* Numeric::do_merge(Registry& registry, RecursionStack& stack) const
     { return new Numeric(*this); }
 
+    Character::Character(std::string const& name, size_t size)
+        : Type(name, size, Type::Character) {}
+    bool Character::do_compare(Type const& type, bool equality, RecursionStack& stack) const
+    { return getSize() == type.getSize() && getCategory() == type.getCategory(); }
+    Type* Character::do_merge(Registry& registry, RecursionStack& stack) const
+    { return new Character(*this); }
+
     Indirect::Indirect(std::string const& name, size_t size, Category category, Type const& on)
         : Type(name, size, category)
         , m_indirection(on) {}

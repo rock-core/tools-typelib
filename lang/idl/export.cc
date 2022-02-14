@@ -81,6 +81,7 @@ namespace
         bool visit_(Container const& type);
         bool visit_(Compound const& type);
 
+        bool visit_(Character const& type);
         bool visit_(Numeric const& type);
 
         bool visit_(Pointer const& type);
@@ -201,6 +202,17 @@ namespace
         m_front = type.getBasename();
         return true;
     }
+    bool IDLTypeIdentifierVisitor::visit_(Character const& type)
+    {
+        m_namespace = "";
+        if (type.getSize() == 1) {
+            m_front = "char";
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
     bool IDLTypeIdentifierVisitor::visit_(Numeric const& type)
     {
         m_namespace = "";
@@ -265,6 +277,7 @@ namespace
         bool visit_(Compound const& type);
         bool visit_(Compound const& type, Field const& field);
 
+        bool visit_(Character const& type);
         bool visit_(Numeric const& type);
 
         bool visit_(Pointer const& type);
@@ -336,6 +349,13 @@ namespace
             << getIDLAbsolute(field.getType(), field.getName())
             << ";\n";
 
+        return true;
+    }
+
+    bool IDLExportVisitor::visit_(Character const& type)
+    {
+        // no need to export Numeric types, they are already defined by IDL
+        // itself
         return true;
     }
 

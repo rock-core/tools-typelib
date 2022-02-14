@@ -4,7 +4,7 @@ module Typelib
     # Get the name for 'char'
     reg = Registry.new(false)
     Registry.add_standard_cxx_types(reg)
-    CHAR_T = reg.get('/char')
+    CHAR_T = reg.get("/char8_t")
     INT_BOOL_T = reg.get("/int#{reg.get('/bool').size * 8}_t")
 
     convert_from_ruby TrueClass, "/bool" do |_value, typelib_type|
@@ -66,21 +66,6 @@ module Typelib
 
     ####
     # C string handling
-    if String.instance_methods.include? :ord
-        convert_from_ruby String, CHAR_T.name do |value, typelib_type|
-            if value.size != 1
-                raise ArgumentError, "trying to convert '#{value}', a string of length different than one, to a character"
-            end
-            Typelib.from_ruby(value[0].ord, typelib_type)
-        end
-    else
-        convert_from_ruby String, CHAR_T.name do |value, typelib_type|
-            if value.size != 1
-                raise ArgumentError, "trying to convert '#{value}', a string of length different than one, to a character"
-            end
-            Typelib.from_ruby(value[0], typelib_type)
-        end
-    end
     convert_from_ruby String, "#{CHAR_T.name}[]" do |value, typelib_type|
         result = typelib_type.new
         Type.from_string(result, value, true)

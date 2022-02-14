@@ -287,6 +287,8 @@ module Typelib
             converted = expected_type.from_ruby(arg)
         elsif expected_type < NumericType
             return arg
+        elsif expected_type < CharacterType && arg.respond_to?(:to_str)
+            return arg
         elsif arg.class.name != expected_type.name
             raise UnknownConversionRequested.new(arg, expected_type),
                   "types differ and there are not convertions from one "\

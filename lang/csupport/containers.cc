@@ -497,13 +497,13 @@ Container const& String::factory(Registry& registry, std::list<Type const*> cons
         throw std::runtime_error("expected only one template argument for std::string");
 
     Type const* element_type;
-    if (!registry.has("/int8_t")) {
-        Type* new_type = new Typelib::Numeric("/int8_t", 1, Numeric::SInt);
+    if (!registry.has("/char8_t")) {
+        Type* new_type = new Typelib::Character("/char8_t", 1);
         registry.add(new_type);
         element_type = new_type;
     }
     else {
-        element_type = registry.get("/int8_t");
+        element_type = registry.get("/char8_t");
     }
 
     String* new_type = new String(*element_type);

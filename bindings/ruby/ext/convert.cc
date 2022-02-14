@@ -13,6 +13,7 @@ using namespace typelib_ruby;
  * and returns the VALUE object which corresponds to
  * the field, or returns nil
  */
+bool RubyGetter::visit_ (char    & value) { m_value = rb_str_new(&value, 1); return false; }
 bool RubyGetter::visit_ (int8_t  & value) { m_value = INT2FIX(value); return false; }
 bool RubyGetter::visit_ (uint8_t & value) { m_value = INT2FIX(value); return false; }
 bool RubyGetter::visit_ (int16_t & value) { m_value = INT2FIX(value); return false; }
@@ -91,6 +92,22 @@ VALUE RubyGetter::apply(Typelib::Value value, VALUE registry, VALUE parent)
     return m_value;
 }
 
+bool RubySetter::visit_ (char    & value) {
+    if (!rb_obj_is_kind_of(m_value, rb_cString)) {
+        rb_raise(rb_eArgError, "only Ruby strings can be converted to characters");
+    }
+
+    int len = RSTRING_LEN(m_value);
+    if (len != 1) {
+        rb_raise(
+            rb_eArgError,
+            "cannot convert a string of length %i into a character, "
+            "required to be of size 1", len
+        );
+    }
+    value = rb_num2char_inline(m_value);
+    return true;
+}
 bool RubySetter::visit_ (int8_t  & value) { value = NUM2INT(m_value); return false; }
 bool RubySetter::visit_ (uint8_t & value) { value = NUM2INT(m_value); return false; }
 bool RubySetter::visit_ (int16_t & value) { value = NUM2INT(m_value); return false; }
@@ -104,7 +121,8 @@ bool RubySetter::visit_ (double  & value) { value = NUM2DBL(m_value); return fal
 
 bool RubySetter::visit_(Value const& v, Array const& a)
 {
-    if (a.getIndirection().getName() == "/char")
+    Type const& element_t = a.getIndirection();
+    if (element_t.getCategory() == Type::Character)
     {
         char*  value = StringValuePtr(m_value);
         size_t length = strlen(value);

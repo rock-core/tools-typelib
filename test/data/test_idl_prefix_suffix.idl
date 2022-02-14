@@ -6,7 +6,7 @@ module CorbaPrefix {
                 struct Compound {
                     long a;
                     short b;
-                    octet c;
+                    char c;
                     long array[10];
                 };
                 struct CompoundInCompound {

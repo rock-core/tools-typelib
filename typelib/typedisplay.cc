@@ -53,6 +53,12 @@ bool TypeDisplayVisitor::visit_(Compound const& type, Field const& field)
     return true;
 }
 
+bool TypeDisplayVisitor::visit_(Character const& type)
+{
+    m_stream << "/char" + to_string(type.getSize() * 8) + "_t";
+    return true;
+}
+
 bool TypeDisplayVisitor::visit_(Numeric const& type)
 {
     char const* name = "";

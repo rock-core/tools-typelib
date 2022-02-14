@@ -620,7 +620,7 @@ class TC_SpecializedTypes < Minitest::Test
         assert_equal("/std/vector</int32_t>", cont.name)
     end
 
-    def test_std_string
+    def test_std_string_creation
         reg   = Typelib::CXXRegistry.new
         type  = reg.get("/std/string")
         value = type.new
@@ -628,15 +628,24 @@ class TC_SpecializedTypes < Minitest::Test
         assert value.empty?
         assert_equal 0, value.length
 
-        value.push(?a)
-        value.push(?b)
+        value.push("a")
+        value.push("b")
         assert_equal "ab", Typelib.to_ruby(value)
         assert_equal "a_string", Typelib.to_ruby(Typelib.from_ruby("a_string", reg.get("/std/string")))
     end
 
+    def test_std_string_from_ruby
+        reg = Typelib::CXXRegistry.new
+        string_t = reg.get("/std/string")
+
+        str = Typelib.from_ruby("string", string_t)
+        assert_kind_of string_t, str
+        assert_equal "string", str.to_ruby
+    end
+
     def test_std_string_push
-        reg   = Typelib::CXXRegistry.new
-        string_t  = reg.get("/std/string")
+        reg = Typelib::CXXRegistry.new
+        string_t = reg.get("/std/string")
 
         str = Typelib.from_ruby("string", string_t)
         str << "1"
@@ -647,8 +656,8 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_std_string_concat
-        reg   = Typelib::CXXRegistry.new
-        string_t  = reg.get("/std/string")
+        reg = Typelib::CXXRegistry.new
+        string_t = reg.get("/std/string")
 
         str = Typelib.from_ruby("string1", string_t)
         str.concat("string2")

@@ -139,6 +139,7 @@ namespace Typelib
             bool   accept_opaques;
 
         protected:
+            bool visit_ (Character const& type);
             bool visit_ (Numeric const& type);
             bool visit_ (Enum    const& type);
             bool visit_ (Array   const& type);

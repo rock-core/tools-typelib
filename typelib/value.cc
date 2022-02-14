@@ -14,6 +14,16 @@ namespace Typelib
         // The ValueVisitor object
         StrictValueVisitor& m_visitor;
 
+        template<typename T8, typename T16>
+        bool char_cast(uint8_t* value, Type const& t)
+        {
+            switch(t.getSize())
+            {
+                case 1: return m_visitor.visit_(*reinterpret_cast<char*>(value));
+                default:
+                    throw UnsupportedType(t, "unsupported character size");
+            };
+        }
 
         template<typename T8, typename T16, typename T32, typename T64>
         bool integer_cast(uint8_t* value, Type const& t)
@@ -54,6 +64,20 @@ namespace Typelib
                 default:
                     throw UnsupportedType(type, "unsupported numeric category");
             }
+        }
+
+        virtual bool visit_ (Character const& type)
+        {
+            uint8_t* value(m_stack.back());
+            switch(type.getSize())
+            {
+                case 1: return m_visitor.visit_(*reinterpret_cast<char*>(value));
+                default:
+                    throw UnsupportedType(
+                        type,
+                        "unsupported character size " + std::to_string(type.getSize())
+                    );
+            };
         }
 
         virtual bool visit_ (Enum const& type)

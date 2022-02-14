@@ -20,6 +20,7 @@ namespace typelib_ruby {
     extern VALUE cEnum;
     extern VALUE cContainer;
     extern VALUE cOpaque;
+    extern VALUE cCharacter;
     extern VALUE cNull;
     extern VALUE cRegistry;
     extern VALUE cMetaData;
@@ -132,6 +133,7 @@ namespace typelib_ruby {
         VALUE m_registry;
         VALUE m_parent;
 
+        bool visit_ (char    & value);
         bool visit_ (int8_t  & value);
         bool visit_ (uint8_t & value);
         bool visit_ (int16_t & value);
@@ -163,6 +165,7 @@ namespace typelib_ruby {
     protected:
         VALUE m_value;
 
+        bool visit_ (char    & value);
         bool visit_ (int8_t  & value);
         bool visit_ (uint8_t & value);
         bool visit_ (int16_t & value);

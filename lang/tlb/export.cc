@@ -20,6 +20,7 @@ namespace
         bool visit_(Compound const& type);
         bool visit_(Compound const& type, Field const& field);
 
+        bool visit_(Character const& type);
         bool visit_(Numeric const& type);
 
         bool visit_(Pointer const& type);
@@ -147,6 +148,16 @@ namespace
         }
     }
 
+    bool TlbExportVisitor::visit_(Character const& type)
+    {
+        m_stream
+            << "<char name=\"" << type.getName() << "\" "
+            << "size=\"" << type.getSize() << "\" " << emitSourceID() << ">\n";
+        m_stream << m_indent << emitMetaData(type) << "\n";
+        m_stream << m_indent << "</char>";
+
+        return true;
+    }
     bool TlbExportVisitor::visit_(Numeric const& type)
     {
         m_stream
