@@ -112,17 +112,6 @@ namespace Typelib
         return m_namespace + name;
     }
 
-    namespace {
-        template<typename T>
-        Numeric* make_std_numeric(char const* name)
-        {
-            typedef numeric_limits<T>   limits;
-            Numeric::NumericCategory category = limits::is_signed ? Numeric::SInt : Numeric::UInt;
-            unsigned int size = (limits::digits + 1) / 8;
-            return new Numeric(name, size, category);
-        }
-    }
-
     /** Returns true if +type+ is a type included in this registry */
     bool Registry::isIncluded(Type const& type) const
     {
