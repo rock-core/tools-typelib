@@ -3,7 +3,7 @@ if(COMMAND cmake_minimum_required)
 endif(COMMAND cmake_minimum_required)
 
 PROJECT(typelib)
-SET(PROJECT_VERSION 1.1)
+SET(PROJECT_VERSION 1.2)
 SET(API_VERSION 1)
 
 #required because of the use of std::unique_ptr
