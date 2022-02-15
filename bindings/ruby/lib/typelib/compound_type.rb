@@ -259,9 +259,7 @@ module Typelib
                 @fields = []
                 @field_metadata = {}
                 get_fields.each do |name, offset, type, metadata|
-                    if name.respond_to?(:force_encoding)
-                        name.force_encoding('ASCII')
-                    end
+                    name.force_encoding("ASCII")
                     field_types[name] = type
                     field_types[name.to_sym] = type
                     fields << [name, type]
