@@ -153,37 +153,7 @@ module Typelib
         end
 
         @loaded_typelib_plugins = true
-        @@loaded_typelib_plugins = true
-
-        if !ENV['TYPELIB_RUBY_PLUGIN_PATH'] || (@@typelib_plugin_path == ENV['TYPELIB_RUBY_PLUGIN_PATH'])
-            return
-        end
-
-        ENV['TYPELIB_RUBY_PLUGIN_PATH'].split(':').each do |dir|
-            specific_file = File.join(dir, "typelib_plugin.rb")
-            if File.exists?(specific_file)
-                if require(specific_file)
-                    STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                    STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                    STDERR.puts "WARN: offending file: #{specific_file}"
-                end
-            else
-                warned = false
-                Dir.glob(File.join(dir, '*.rb')) do |file|
-                    if !warned
-                        warned = true
-                        STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                        STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                        STDERR.puts "WARN: offending dir: #{dir}"
-                    end
-                    require file
-                end
-            end
-        end
-
-        @@typelib_plugin_path = ENV['TYPELIB_RUBY_PLUGIN_PATH'].dup
     end
-    @@typelib_plugin_path = nil
 end
 
 # Type models
