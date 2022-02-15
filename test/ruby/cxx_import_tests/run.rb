@@ -1,14 +1,12 @@
-require 'typelib'
+require "typelib"
 
 reg = Typelib::Registry.new
-Dir.glob('*.hh') do |file|
+Dir.glob("*.hh") do |file|
     dir = Dir.pwd
-    basename = File.basename(file, '.hh')
+    basename = File.basename(file, ".hh")
     expected = Typelib::Registry.from_xml(File.read("#{basename}.tlb"))
     opaques  = "#{basename}.opaques"
-    if File.file?(opaques)
-        reg.import(opaques, 'tlb')
-    end
+    reg.import(opaques, "tlb") if File.file?(opaques)
 
     reg.import(file)
 
@@ -28,4 +26,3 @@ Dir.glob('*.hh') do |file|
         end
     end
 end
-

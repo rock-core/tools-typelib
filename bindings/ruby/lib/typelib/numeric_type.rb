@@ -14,7 +14,7 @@ module Typelib
         end
 
         def self.from_ruby(value)
-            v = self.new
+            v = new
             v.typelib_from_ruby(value)
             v
         rescue TypeError => e
@@ -35,7 +35,7 @@ module Typelib
         #
         # @option (see Type#to_h)
         # @return (see Type#to_h)
-        def self.to_h(options = Hash.new)
+        def self.to_h(options = {})
             info = super
             info[:size] = size
             if integer?
@@ -50,32 +50,32 @@ module Typelib
         # Pack codes as [size, unsigned?, big_endian?] => code
         INTEGER_PACK_CODES = Hash[
             # a.k.a. /(u)int8_t
-            [1, true, false]  => 'C',
-            [1, true, true]   => 'C',
-            [1, false, false] => 'c',
-            [1, false, true]  => 'c',
+            [1, true, false] => "C",
+            [1, true, true] => "C",
+            [1, false, false] => "c",
+            [1, false, true] => "c",
             # a.k.a. /(u)int16_t
-            [2, true, false]  => 'S<',
-            [2, true, true]   => 'S>',
-            [2, false, false] => 's<',
-            [2, false, true]  => 's>',
+            [2, true, false] => "S<",
+            [2, true, true] => "S>",
+            [2, false, false] => "s<",
+            [2, false, true] => "s>",
             # a.k.a. /(u)int32_t
-            [4, true, false]  => 'L<',
-            [4, true, true]   => 'L>',
-            [4, false, false] => 'l<',
-            [4, false, true]  => 'l>',
+            [4, true, false] => "L<",
+            [4, true, true] => "L>",
+            [4, false, false] => "l<",
+            [4, false, true] => "l>",
             # a.k.a. /(u)int64_t
-            [8, true, false]  => 'Q<',
-            [8, true, true]   => 'Q>',
-            [8, false, false] => 'q<',
-            [8, false, true]  => 'q>']
+            [8, true, false] => "Q<",
+            [8, true, true] => "Q>",
+            [8, false, false] => "q<",
+            [8, false, true] => "q>"]
         FLOAT_PACK_CODES = Hash[
             # a.k.a. /float
-            [4, false]  => 'e',
-            [4, true]   => 'g',
+            [4, false] => "e",
+            [4, true] => "g",
             # a.k.a. /double
-            [8, false]  => 'E',
-            [8, true]   => 'G']
+            [8, false] => "E",
+            [8, true] => "G"]
 
         # Returns the Array#pack code that matches this type
         #
@@ -89,9 +89,9 @@ module Typelib
         end
 
         # (see Type#to_simple_value)
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             v = to_ruby
-            return v if !options[:special_float_values]
+            return v unless options[:special_float_values]
             return v if self.class.integer?
 
             if options[:special_float_values] == :string
@@ -113,4 +113,3 @@ module Typelib
         end
     end
 end
-

@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 class TC_Value < Minitest::Test
     include Typelib
@@ -19,8 +19,8 @@ class TC_Value < Minitest::Test
     def make_registry
         registry = Registry.new
         testfile = File.join(SRCDIR, "test_cimport.1")
-        assert_raises(RuntimeError) { registry.import( testfile ) }
-        registry.import( testfile, "c" )
+        assert_raises(RuntimeError) { registry.import(testfile) }
+        registry.import(testfile, "c")
         registry
     end
 
@@ -143,13 +143,13 @@ class TC_Value < Minitest::Test
         v2 = type.new.zero!
         assert_equal(0, v1)
         assert_equal(v1, v2)
-        assert(! v1.eql?(v2))
+        assert(!v1.eql?(v2))
 
         # This one is tricky: we want to have == return true if the fields of a
         # compounds are equal, regardless of padding bytes. So we prepare a
         # pattern which will be used as "blank" memory and then fill the fields
         registry = make_registry
-        a_type    = registry.get("/A")
+        a_type = registry.get("/A")
         a_pattern = (1..a_type.size).to_a.pack("c*")
         a1 = a_type.wrap a_pattern
         a2 = a_type.wrap a_pattern.reverse
@@ -158,7 +158,7 @@ class TC_Value < Minitest::Test
         a1.c = a2.c = 30
         a1.d = a2.d = 40
         assert_equal(a1, a2)
-        assert(! a1.eql?(a2))
+        assert(!a1.eql?(a2))
 
         a2.d = 50
         refute_equal(a1, a2)
@@ -169,8 +169,8 @@ class TC_Value < Minitest::Test
     def test_value_cast
         r0 = make_registry
         r1 = make_registry
-        t0 = r0.get 'StdCollections'
-        t1 = r1.get 'StdCollections'
+        t0 = r0.get "StdCollections"
+        t1 = r1.get "StdCollections"
 
         v0 = t0.new
         assert_same v0, v0.cast(t0)
@@ -179,38 +179,38 @@ class TC_Value < Minitest::Test
         refute_same v0, v1
         assert(t0 == t1)
 
-        wrong_type = r1.get 'A'
+        wrong_type = r1.get "A"
         assert_raises(ArgumentError) { v0.cast(wrong_type) }
     end
 
     def test_byte_array
-        as_string = [5].pack('S')
+        as_string = [5].pack("S")
         long_t = CXXRegistry.new.build("/short")
 
         assert_raises(ArgumentError) { long_t.wrap "" }
         rb_value = long_t.wrap as_string
         as_string = rb_value.to_byte_array
         assert_equal(2, as_string.size)
-        assert_equal(5, as_string.unpack('S').first)
+        assert_equal(5, as_string.unpack("S").first)
 
-        a = make_registry.get('ADef')
+        a = make_registry.get("ADef")
         # The following line will lead to valgrind complaining. This is
         # harmless: we access the attribute values before we assign them.
-        a = a.new :a => 10, :b => 20, :c => 30, :d => 40
-        assert_equal([10, 20, 30, 40], a.to_byte_array.unpack('Qicxs'))
+        a = a.new a: 10, b: 20, c: 30, d: 40
+        assert_equal([10, 20, 30, 40], a.to_byte_array.unpack("Qicxs"))
     end
 
     def test_string_handling
         buffer_t = CXXRegistry.new.build("/char[256]")
         buffer = buffer_t.new
-        assert( buffer.string_handler? )
-        assert( buffer.respond_to?(:to_str))
+        assert(buffer.string_handler?)
+        assert(buffer.respond_to?(:to_str))
 
         # Check that .from_str.to_str is an identity
         typelib_value = Typelib.from_ruby("first test", buffer_t)
         assert_kind_of buffer_t, typelib_value
         assert_equal("first test", typelib_value.to_ruby)
-        assert_raises(ArgumentError) { Typelib.from_ruby("a"*512, buffer_t) }
+        assert_raises(ArgumentError) { Typelib.from_ruby("a" * 512, buffer_t) }
     end
 
     def test_pretty_printing
@@ -222,22 +222,22 @@ class TC_Value < Minitest::Test
 
     def test_to_csv
         klass = make_registry.get("/DisplayTest")
-        assert_equal("t.fields[0] t.fields[1] t.fields[2] t.fields[3] t.f t.d t.a.a t.a.b t.a.c t.a.d t.mode", klass.to_csv('t'));
-        assert_equal(".fields[0] .fields[1] .fields[2] .fields[3] .f .d .a.a .a.b .a.c .a.d .mode", klass.to_csv);
-        assert_equal(".fields[0],.fields[1],.fields[2],.fields[3],.f,.d,.a.a,.a.b,.a.c,.a.d,.mode", klass.to_csv('', ','));
+        assert_equal("t.fields[0] t.fields[1] t.fields[2] t.fields[3] t.f t.d t.a.a t.a.b t.a.c t.a.d t.mode", klass.to_csv("t"))
+        assert_equal(".fields[0] .fields[1] .fields[2] .fields[3] .f .d .a.a .a.b .a.c .a.d .mode", klass.to_csv)
+        assert_equal(".fields[0],.fields[1],.fields[2],.fields[3],.f,.d,.a.a,.a.b,.a.c,.a.d,.mode", klass.to_csv("", ","))
 
         value = klass.new
         value.zero!
-        value.fields[0] = 0;
-        value.fields[1] = 1;
-        value.fields[2] = 2;
-        value.fields[3] = 3;
-        value.f = 1.1;
-        value.d = 2.2;
-        value.a.a = 10;
-        value.a.b = 20;
-        value.a.c = 'b';
-        value.a.d = 42;
+        value.fields[0] = 0
+        value.fields[1] = 1
+        value.fields[2] = 2
+        value.fields[3] = 3
+        value.f = 1.1
+        value.d = 2.2
+        value.a.a = 10
+        value.a.b = 20
+        value.a.c = "b"
+        value.a.d = 42
 
         space_sep = value.to_csv.split(" ")
         assert_in_delta(1.1, Float(space_sep[4]), 0.00001)
@@ -254,17 +254,16 @@ class TC_Value < Minitest::Test
         assert_equal("0,1,2,3,1.1,2.2,10,20,98,42,OUTPUT", comma_sep.join(","))
     end
 
-
     def test_is_a
         assert !Typelib::CompoundType.is_a?("/A")
 
         registry = make_registry
         a = registry.get("/A").new
-        assert( a.is_a?("/A") )
-        assert( a.is_a?(/A$/) )
+        assert(a.is_a?("/A"))
+        assert(a.is_a?(/A$/))
 
-        assert( a.is_a?(registry.get("/A")) )
-        assert( a.is_a?(registry.get("/int64_t")) )
+        assert(a.is_a?(registry.get("/A")))
+        assert(a.is_a?(registry.get("/int64_t")))
     end
 
     def test_dup
@@ -294,7 +293,6 @@ class TC_Value < Minitest::Test
         assert_equal(20, a.a)
         assert_equal(10, b.a)
     end
-
 
     def test_to_s
         int_value = CXXRegistry.new.get("/int").new
@@ -326,18 +324,18 @@ class TC_Value < Minitest::Test
     def test_nan_handling
         reg = Typelib::CXXRegistry.new
 
-        double_t = reg.get('/double')
+        double_t = reg.get("/double")
         nan_d = [Float::NAN].pack("d")
         assert double_t.wrap(nan_d).to_ruby.nan?
 
-        float_t = reg.get('/float')
+        float_t = reg.get("/float")
         nan_f = [Float::NAN].pack("f")
         assert float_t.wrap(nan_f).to_ruby.nan?
     end
 
     def test_vector_of_vector
         registry = make_registry
-        containers_t = registry.get('Collections')
+        containers_t = registry.get("Collections")
         v_v_struct_t = containers_t[:v_v_struct]
         v_struct_t   = v_v_struct_t.deference
         struct_t     = v_struct_t.deference
@@ -349,8 +347,8 @@ class TC_Value < Minitest::Test
 
     def test_arrays
         registry = make_registry
-        array_t = registry.get('Arrays')
-        ns1_test_t = registry.get('/NS1/Test')
+        array_t = registry.get("Arrays")
+        ns1_test_t = registry.get("/NS1/Test")
         arrays = array_t.new
         arrays.zero!
         array_a_struct = arrays.raw_a_struct
@@ -359,26 +357,26 @@ class TC_Value < Minitest::Test
     end
 
     def test_convertion_to_from_ruby
-        Typelib.convert_to_ruby '/NS1/Test', Integer do |value|
+        Typelib.convert_to_ruby "/NS1/Test", Integer do |value|
             value.a
         end
-        Typelib.convert_from_ruby Fixnum, '/NS1/Test' do |value, expected_type|
+        Typelib.convert_from_ruby Integer, "/NS1/Test" do |value, expected_type|
             result = expected_type.new
             result.a = value
             result
         end
 
         registry = make_registry
-        ns1_test_t = registry.get('/NS1/Test')
+        ns1_test_t = registry.get("/NS1/Test")
         assert_equal Integer, ns1_test_t.convertion_to_ruby[0]
-        vector_ns1_test_t = registry.get('/std/vector</NS1/Test>')
+        vector_ns1_test_t = registry.get("/std/vector</NS1/Test>")
         assert_equal Array, vector_ns1_test_t.convertion_to_ruby[0]
-        vector_vector_ns1_test_t = registry.get('/std/vector</std/vector</NS1/Test>>')
+        vector_vector_ns1_test_t = registry.get("/std/vector</std/vector</NS1/Test>>")
         assert_equal Array, vector_vector_ns1_test_t.convertion_to_ruby[0]
 
         # Test that containers get converted to array because of the custom
         # convertion on /NS1/Test
-        containers_t = registry.get('Collections')
+        containers_t = registry.get("Collections")
         containers = containers_t.new
         v_v_struct = containers.v_v_struct
         assert_kind_of Array, v_v_struct
@@ -390,7 +388,7 @@ class TC_Value < Minitest::Test
 
         # Test that C++ Arrays get converted to Ruby Array because of the custom
         # convertion on /NS1/Test
-        array_t = registry.get('Arrays')
+        array_t = registry.get("Arrays")
         arrays = array_t.new
         arrays.zero!
         a_struct = arrays.a_struct
@@ -401,8 +399,7 @@ class TC_Value < Minitest::Test
         arrays.apply_changes_from_converted_types
         assert_equal [10, 0, 0, 0, 0, 0, 0, 0, 0, 0], arrays.raw_a_struct.to_ruby
     ensure
-        Typelib.convertions_from_ruby.from_typename.delete('/NS1/Test')
-        Typelib.convertions_to_ruby.from_typename.delete('/NS1/Test')
+        Typelib.convertions_from_ruby.from_typename.delete("/NS1/Test")
+        Typelib.convertions_to_ruby.from_typename.delete("/NS1/Test")
     end
 end
-

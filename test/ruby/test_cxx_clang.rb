@@ -1,5 +1,5 @@
-require 'typelib/test'
-require_relative './cxx_common_tests'
+require "typelib/test"
+require_relative "./cxx_common_tests"
 
 class TC_CXX_Clang < Minitest::Test
     include Typelib
@@ -7,7 +7,6 @@ class TC_CXX_Clang < Minitest::Test
 
     def setup
         super
-        setup_loader('clang')
+        setup_loader("clang")
     end
 end
-

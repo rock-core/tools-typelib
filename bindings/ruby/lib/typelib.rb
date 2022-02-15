@@ -141,6 +141,12 @@ module Typelib
         end
     end
 
+    TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING = <<~MSG
+        WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment
+        WARN: variable is deprecated. Just put a file called typelib_plugin.rb into a
+        WARN: subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)
+    MSG
+
     @loaded_typelib_plugins = false
 
     def self.load_typelib_plugins(force: false)
@@ -153,37 +159,37 @@ module Typelib
         end
 
         @loaded_typelib_plugins = true
-        @@loaded_typelib_plugins = true
 
-        if !ENV['TYPELIB_RUBY_PLUGIN_PATH'] || (@@typelib_plugin_path == ENV['TYPELIB_RUBY_PLUGIN_PATH'])
+        if !ENV["TYPELIB_RUBY_PLUGIN_PATH"] ||
+           (@typelib_plugin_path == ENV["TYPELIB_RUBY_PLUGIN_PATH"])
             return
         end
 
-        ENV['TYPELIB_RUBY_PLUGIN_PATH'].split(':').each do |dir|
+        ENV["TYPELIB_RUBY_PLUGIN_PATH"].split(":").each do |dir|
             specific_file = File.join(dir, "typelib_plugin.rb")
-            if File.exists?(specific_file)
+            if File.exist?(specific_file)
                 if require(specific_file)
-                    STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                    STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                    STDERR.puts "WARN: offending file: #{specific_file}"
+                    TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING
+                        .split("\n").each { |line| warn line }
+                    warn "WARN: Offending file: #{specific_file}"
                 end
             else
                 warned = false
-                Dir.glob(File.join(dir, '*.rb')) do |file|
-                    if !warned
+                Dir.glob(File.join(dir, "*.rb")).sort.each do |file|
+                    unless warned
                         warned = true
-                        STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                        STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                        STDERR.puts "WARN: offending dir: #{dir}"
+                        TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING
+                            .split("\n").each { |line| warn line }
+                        warn "WARN: Offending file: #{file}"
                     end
                     require file
                 end
             end
         end
 
-        @@typelib_plugin_path = ENV['TYPELIB_RUBY_PLUGIN_PATH'].dup
+        @typelib_plugin_path = ENV["TYPELIB_RUBY_PLUGIN_PATH"].dup
     end
-    @@typelib_plugin_path = nil
+    @typelib_plugin_path = nil
 end
 
 # Type models
@@ -360,7 +366,7 @@ module Typelib
     end
     @allocated_memory = 0
     @last_allocated_memory = 0
-    @allocated_memory_threshold = 50 * 1024 ** 2
+    @allocated_memory_threshold = 50 * 1024**2
 
     # A raw, untyped, memory zone
     class MemoryZone
@@ -370,35 +376,35 @@ module Typelib
     end
 end
 
-require 'typelib/cxx'
+require "typelib/cxx"
 
 # Finally, set guard types on the root classes
 module Typelib
-    class Type
+    class Type # :nodoc:
         initialize_base_class
     end
-    class NumericType
+    class NumericType # :nodoc:
         initialize_base_class
     end
-    class EnumType
+    class EnumType # :nodoc:
         initialize_base_class
     end
-    class CompoundType
+    class CompoundType # :nodoc:
         initialize_base_class
     end
-    class ContainerType
+    class ContainerType # :nodoc:
         initialize_base_class
     end
-    class ArrayType
+    class ArrayType # :nodoc:
         initialize_base_class
     end
-    class IndirectType
+    class IndirectType # :nodoc:
         initialize_base_class
     end
-    class OpaqueType
+    class OpaqueType # :nodoc:
         initialize_base_class
     end
-    class PointerType
+    class PointerType # :nodoc:
         initialize_base_class
     end
 end

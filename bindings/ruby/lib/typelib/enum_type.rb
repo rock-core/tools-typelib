@@ -8,7 +8,7 @@ module Typelib
         # (see Type#to_simple_value)
         #
         # Enums are returned as their symbolic representation (a string)
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             to_ruby.to_s
         end
 
@@ -33,7 +33,7 @@ module Typelib
             #
             # @option (see Type#to_h)
             # @return (see Type#to_h)
-            def to_h(options = Hash.new)
+            def to_h(options = {})
                 info = super
                 info[:values] = keys.map do |n, v|
                     Hash[name: n, value: v]
@@ -43,7 +43,7 @@ module Typelib
 
             def pretty_print(pp, verbose = false) # :nodoc:
                 super
-                pp.text '{'
+                pp.text "{"
                 pp.nest(2) do
                     keys = self.keys.sort_by(&:last)
                     pp.breakable
@@ -56,7 +56,7 @@ module Typelib
                     end
                 end
                 pp.breakable
-                pp.text '}'
+                pp.text "}"
             end
         end
     end

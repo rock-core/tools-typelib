@@ -1,0 +1,10 @@
+inherit_from: .rubocop_todo.yml
+
+inherit_gem:
+  rubocop-rock: defaults.yml
+
+AllCops:
+  TargetRubyVersion: "2.5"
+
+Style/ClassCheck:
+  Enabled: false

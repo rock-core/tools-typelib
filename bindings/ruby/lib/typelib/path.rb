@@ -14,7 +14,7 @@ module Typelib
         attr_reader :elements
 
         def initialize(elements)
-            @elements   = elements.dup
+            @elements = elements.dup
         end
 
         def size
@@ -52,9 +52,7 @@ module Typelib
 
         # Resolves all the values described by this path on +root+
         def resolve(root, elements = self.elements.dup)
-            if elements.empty?
-                return [root]
-            end
+            return [root] if elements.empty?
 
             operation = elements.shift
             send(operation[0], operation[1], root, elements)
@@ -80,4 +78,3 @@ module Typelib
         end
     end
 end
-

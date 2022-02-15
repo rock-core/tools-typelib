@@ -17,23 +17,36 @@ module Typelib
         # Module used to extend frozen values
         module Freezer
             def clear; raise TypeError, "frozen object" end
+
             def do_set(*args); raise TypeError, "frozen object" end
+
             def do_delete_if(*args); raise TypeError, "frozen object" end
+
             def do_erase(*args); raise TypeError, "frozen object" end
+
             def do_push(*args); raise TypeError, "frozen object" end
         end
 
         # Module used to extend invalidated values
         module Invalidate
             def clear; raise TypeError, "invalidated object" end
+
             def size; raise TypeError, "invalidated object" end
+
             def length; raise TypeError, "invalidated object" end
+
             def do_set(*args); raise TypeError, "invalidated object" end
+
             def do_delete_if(*args); raise TypeError, "invalidated object" end
+
             def do_erase(*args); raise TypeError, "invalidated object" end
+
             def do_push(*args); raise TypeError, "invalidated object" end
+
             def do_each(*args); raise TypeError, "invalidated object" end
+
             def do_get(*args); raise TypeError, "invalidated object" end
+
             def contained_memory_id; raise TypeError, "invalidated object" end
         end
 
@@ -88,7 +101,7 @@ module Typelib
             # checks
             def get_no_boundary_check(index)
                 if @elements[index]
-                    return __element_to_ruby(@elements[index])
+                    __element_to_ruby(@elements[index])
                 else
                     value = do_get(index, false)
                     if value.kind_of?(Typelib::Type)
@@ -105,6 +118,7 @@ module Typelib
                 elsif index >= size
                     raise ArgumentError, "index out of bounds (#{index} >= #{size})"
                 end
+
                 raw_get_no_boundary_check(index)
             end
 
@@ -124,6 +138,7 @@ module Typelib
                     elsif (index + chunk_size) > size
                         raise ArgumentError, "index out of bounds (#{index} + #{chunk_size} >= #{size})"
                     end
+
                     result = self.class.new
                     chunk_size.times do |i|
                         result.push(raw_get_no_boundary_check(index + i))
@@ -141,9 +156,7 @@ module Typelib
             end
 
             def raw_set(index, value)
-                if index < 0 || index >= size
-                    raise ArgumentError, "index out of bounds"
-                end
+                raise ArgumentError, "index out of bounds" if index < 0 || index >= size
 
                 do_set(index, value)
             end
@@ -158,14 +171,16 @@ module Typelib
             end
 
             def raw_each
-                return enum_for(:raw_each) if !block_given?
+                return enum_for(:raw_each) unless block_given?
+
                 for idx in 0...size
                     yield(raw_get_no_boundary_check(idx))
                 end
             end
 
             def each
-                return enum_for(:each) if !block_given?
+                return enum_for(:each) unless block_given?
+
                 for idx in 0...size
                     yield(get_no_boundary_check(idx))
                 end
@@ -185,9 +200,7 @@ module Typelib
         def self.subclass_initialize
             super if defined? super
 
-            if random_access?
-                include RandomAccessContainer
-            end
+            include RandomAccessContainer if random_access?
 
             convert_from_ruby Array do |value, expected_type|
                 t = expected_type.new
@@ -227,12 +240,8 @@ module Typelib
             # type by name can override the default convertion above
             super if defined? super
 
-            if deference.needs_convertion_to_ruby?
-                include ConvertToRuby
-            end
-            if deference.needs_convertion_from_ruby?
-                include ConvertFromRuby
-            end
+            include ConvertToRuby if deference.needs_convertion_to_ruby?
+            include ConvertFromRuby if deference.needs_convertion_from_ruby?
         end
 
         # DEPRECATED. Use #push instead
@@ -262,17 +271,17 @@ module Typelib
         end
 
         def handle_container_invalidation
-            memory_id    = self.contained_memory_id
+            memory_id = contained_memory_id
             yield
         ensure
             if invalidated?
                 # All children have been invalidated already by #invalidate
-            elsif memory_id && (memory_id != self.contained_memory_id)
+            elsif memory_id && (memory_id != contained_memory_id)
                 Typelib.debug { "invalidating all elements in #{raw_to_s}" }
                 invalidate_children
-            elsif @elements.size > self.size
-                Typelib.debug { "invalidating #{@elements.size - self.size} trailing elements in #{raw_to_s}" }
-                while @elements.size > self.size
+            elsif @elements.size > size
+                Typelib.debug { "invalidating #{@elements.size - size} trailing elements in #{raw_to_s}" }
+                while @elements.size > size
                     if el = @elements.pop
                         el.invalidate
                     end
@@ -327,7 +336,7 @@ module Typelib
 
         # Enumerates the elements of this container
         def each
-            return enum_for(:each) if !block_given?
+            return enum_for(:each) unless block_given?
 
             idx = 0
             do_each(false) do |el|
@@ -372,7 +381,7 @@ module Typelib
         def pretty_print(pp)
             apply_changes_from_converted_types
             index = 0
-            pp.text '['
+            pp.text "["
             pp.nest(2) do
                 pp.breakable
                 pp.seplist(enum_for(:each)) do |element|
@@ -382,7 +391,7 @@ module Typelib
                 end
             end
             pp.breakable
-            pp.text ']'
+            pp.text "]"
         end
 
         # Returns the description of a type using only simple ruby objects
@@ -397,7 +406,7 @@ module Typelib
         #
         # @option (see Type#to_h)
         # @return (see Type#to_h)
-        def self.to_h(options = Hash.new)
+        def self.to_h(options = {})
             info = super
             info[:element] =
                 if options[:recursive]
@@ -414,7 +423,7 @@ module Typelib
         # elements, or the hash described for the :pack_simple_arrays option. In
         # the latter case, a 'size' field is added with the number of elements
         # in the container to allow for validation on the receiving end.
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             apply_changes_from_converted_types
             if options[:pack_simple_arrays] && element_t.respond_to?(:pack_code)
                 Hash[pack_code: element_t.pack_code,
