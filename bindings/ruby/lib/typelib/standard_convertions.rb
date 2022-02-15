@@ -35,9 +35,7 @@ module Typelib
 
     convert_to_ruby "/std/string", String do |value|
         value = value.to_byte_array[8..-1]
-        if value.respond_to?(:force_encoding)
-            value.force_encoding(Encoding.default_internal || __ENCODING__)
-        end
+        value.force_encoding(Encoding.default_internal || __ENCODING__)
         value
     end
 
@@ -96,17 +94,13 @@ module Typelib
     end
     convert_to_ruby "#{CHAR_T.name}[]", String do |value|
         value = Type.to_string(value, true)
-        if value.respond_to?(:force_encoding)
-            value.force_encoding('ASCII')
-        end
+        value.force_encoding("ASCII")
         value
     end
     specialize "#{CHAR_T.name}[]" do
         def to_str
             value = Type.to_string(self, true)
-            if value.respond_to?(:force_encoding)
-                value.force_encoding('ASCII')
-            end
+            value.force_encoding("ASCII")
             value
         end
     end
@@ -117,20 +111,14 @@ module Typelib
     end
     convert_to_ruby "#{CHAR_T.name}*", String do |value|
         value = Type.to_string(value, true)
-        if value.respond_to?(:force_encoding)
-            value.force_encoding('ASCII')
-        end
+        value.force_encoding("ASCII")
         value
     end
     specialize "#{CHAR_T.name}*" do
         def to_str
             value = Type.to_string(self, true)
-            if value.respond_to?(:force_encoding)
-                value.force_encoding('ASCII')
-            end
+            value.force_encoding("ASCII")
             value
         end
     end
 end
-
-
