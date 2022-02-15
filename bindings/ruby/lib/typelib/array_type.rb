@@ -16,8 +16,11 @@ module Typelib
         # Module used to extend invalidated values
         module Invalidate
             def do_set(*args); raise TypeError, "invalidated object" end
+
             def do_each(*args); raise TypeError, "invalidated object" end
+
             def do_get(*args); raise TypeError, "invalidated object" end
+
             def size; raise TypeError, "invalidated object" end
         end
 
@@ -41,11 +44,11 @@ module Typelib
         def typelib_initialize
             super
             @element_t = self.class.deference
-            @elements = Array.new
+            @elements = []
         end
 
         def self.find_custom_convertions(conversion_set)
-            generic_array_id = deference.name + '[]'
+            generic_array_id = deference.name + "[]"
             super(conversion_set) +
                 super(conversion_set, generic_array_id)
         end
@@ -69,7 +72,7 @@ module Typelib
             apply_changes_from_converted_types
             all_fields = enum_for(:each_with_index).to_a
 
-            pp.text '['
+            pp.text "["
             pp.nest(2) do
                 pp.breakable
                 pp.seplist(all_fields) do |element|
@@ -79,13 +82,11 @@ module Typelib
                 end
             end
             pp.breakable
-            pp.text ']'
+            pp.text "]"
         end
 
         def raw_each
-            if !block_given?
-                return enum_for(:raw_each)
-            end
+            return enum_for(:raw_each) unless block_given?
 
             self.class.length.times do |i|
                 yield(raw_get(i))
@@ -93,9 +94,8 @@ module Typelib
         end
 
         def each
-            if !block_given?
-                return enum_for(:each)
-            end
+            return enum_for(:each) unless block_given?
+
             raw_each do |el|
                 yield(Typelib.to_ruby(el, element_t))
             end
@@ -159,9 +159,7 @@ module Typelib
             if value.kind_of?(Type)
                 attribute = raw_get(index)
                 # If +value+ is already a typelib value, just do a plain copy
-                if attribute.kind_of?(Typelib::Type)
-                    return Typelib.copy(attribute, value)
-                end
+                return Typelib.copy(attribute, value) if attribute.kind_of?(Typelib::Type)
             end
             do_set(index, value)
         end
@@ -199,7 +197,7 @@ module Typelib
         #
         # @option (see Type#to_h)
         # @return (see Type#to_h)
-        def self.to_h(options = Hash.new)
+        def self.to_h(options = {})
             info = super
             info[:length] = length
             info[:element] =
@@ -215,7 +213,7 @@ module Typelib
         #
         # Array types are returned as either an array of their converted
         # elements, or the hash described for the :pack_simple_arrays option.
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             apply_changes_from_converted_types
             if options[:pack_simple_arrays] && element_t.respond_to?(:pack_code)
                 Hash[pack_code: element_t.pack_code,

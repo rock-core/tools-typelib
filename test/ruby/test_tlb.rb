@@ -1,7 +1,6 @@
-require 'typelib/test'
+require "typelib/test"
 
 class TC_TLB < Minitest::Test
-
     # The bulk of the C++ tests are made of a C++ file and an expected tlb file.
     # This method generate one test method per such file
     #
@@ -11,16 +10,16 @@ class TC_TLB < Minitest::Test
             define_method(:tlb_test_dir) { dir }
         end
 
-        Dir.glob(File.join(dir, '*.tlb')) do |file|
-            basename = File.basename(file, '.tlb')
+        Dir.glob(File.join(dir, "*.tlb")) do |file|
+            basename = File.basename(file, ".tlb")
             prefix   = File.join(dir, basename)
             expected = "#{prefix}.expected"
-            next if !File.file?(expected)
+            next unless File.file?(expected)
 
             define_method "test_tlb_#{basename}" do
                 reg = Typelib::Registry.new
                 expected = Typelib::Registry.from_xml(File.read(expected))
-                reg.import(file, 'tlb')
+                reg.import(file, "tlb")
 
                 expected.each(with_aliases: true) do |name, expected_type|
                     actual_type = reg.build(name)
@@ -44,7 +43,7 @@ class TC_TLB < Minitest::Test
         end
     end
 
-    tlb_test_dir = File.expand_path('tlb_import_tests', File.dirname(__FILE__))
+    tlb_test_dir = File.expand_path("tlb_import_tests", File.dirname(__FILE__))
     generate_common_tests(tlb_test_dir)
 
     def tbl_test_dir

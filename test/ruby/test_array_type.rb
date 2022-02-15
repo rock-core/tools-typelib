@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 describe Typelib::ArrayType do
     attr_reader :registry
@@ -10,12 +10,12 @@ describe Typelib::ArrayType do
         describe "#to_h" do
             attr_reader :array_t, :element_t
             before do
-                @array_t = registry.build '/int32_t[10]'
+                @array_t = registry.build "/int32_t[10]"
                 @element_t = array_t.deference
             end
 
             it "should be able to describe the type" do
-                expected = Hash[class: 'Typelib::ArrayType',
+                expected = Hash[class: "Typelib::ArrayType",
                                 name: array_t.name,
                                 element: element_t.to_h_minimal(layout_info: false),
                                 length: 10]
@@ -23,7 +23,7 @@ describe Typelib::ArrayType do
             end
 
             it "should describe the sub-type fully if recursive is true" do
-                expected = Hash[class: 'Typelib::ArrayType',
+                expected = Hash[class: "Typelib::ArrayType",
                                 name: array_t.name,
                                 element: element_t.to_h(layout_info: false),
                                 length: 10]
@@ -35,7 +35,7 @@ describe Typelib::ArrayType do
     describe "#to_simple_value" do
         attr_reader :ruby_array, :array
         before do
-            array_t = registry.build '/int32_t[10]'
+            array_t = registry.build "/int32_t[10]"
             element_t = array_t.deference
             @ruby_array = (1..10).to_a
             @array = Typelib.from_ruby(ruby_array, array_t)
@@ -51,4 +51,3 @@ describe Typelib::ArrayType do
         end
     end
 end
-

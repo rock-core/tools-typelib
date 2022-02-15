@@ -144,14 +144,16 @@ module Typelib
         end
 
         def raw_each_field
-            return enum_for(__method__) if !block_given?
+            return enum_for(__method__) unless block_given?
+
             self.class.each_field do |field_name, _|
                 yield(field_name, raw_get(field_name))
             end
         end
 
         def each_field
-            return enum_for(__method__) if !block_given?
+            return enum_for(__method__) unless block_given?
+
             self.class.each_field do |field_name, _|
                 yield(field_name, get(field_name))
             end
@@ -165,7 +167,7 @@ module Typelib
             # In case of compound types, we check that either self, or
             # the first element field is +typename+
             def is_a?(typename)
-                super || (!self.fields.empty? && self.fields[0].last.is_a?(typename))
+                super || (!fields.empty? && fields[0].last.kind_of?(typename))
             end
 
             # The set of fields that are converted to a different type when
@@ -216,14 +218,15 @@ module Typelib
             def extend_for_custom_convertions
                 super if defined? super
 
-                if !converted_fields.empty?
+                unless converted_fields.empty?
                     self.contains_converted_types = true
                     # Make it local so that it can be accessed in the module we define below
                     converted_fields = self.converted_fields
                     type_klass = self
 
                     converted_fields = Typelib.filter_methods_that_should_not_be_defined(
-                        self, type_klass, converted_fields, Type::ALLOWED_OVERLOADINGS, nil, false)
+                        self, type_klass, converted_fields, Type::ALLOWED_OVERLOADINGS, nil, false
+                    )
 
                     m = custom_convertion_module(converted_fields)
                     include(m)
@@ -253,7 +256,7 @@ module Typelib
             # which returns the field type
             def subclass_initialize
                 @field_types = {}
-                @fields = {}
+                @fields = []
                 @field_metadata = {}
                 get_fields.each do |name, offset, type, metadata|
                     if name.respond_to?(:force_encoding)
@@ -285,7 +288,7 @@ module Typelib
 
                 super if defined? super
 
-                if !convertions_from_ruby.has_key?(Hash)
+                unless convertions_from_ruby.key?(Hash)
                     convert_from_ruby Hash do |value, expected_type|
                         result = expected_type.new
                         result.set_hash(value)
@@ -293,7 +296,7 @@ module Typelib
                     end
                 end
 
-                if !convertions_from_ruby.has_key?(Array)
+                unless convertions_from_ruby.key?(Array)
                     convert_from_ruby Array do |value, expected_type|
                         result = expected_type.new
                         result.set_array(value)
@@ -330,16 +333,19 @@ module Typelib
                     raise ArgumentError, "#{name} is not a field of #{self.name}"
                 end
             end
+
             # True if the given field is defined
             def has_field?(name)
-                field_types.has_key?(name)
+                field_types.key?(name)
             end
+
             # Iterates on all fields
             #
             # @yield [name,type] the fields of this compound
             # @return [void]
             def each_field
-                return enum_for(__method__) if !block_given?
+                return enum_for(__method__) unless block_given?
+
                 fields.each { |field| yield(*field) }
             end
 
@@ -383,7 +389,7 @@ module Typelib
             end
 
             def pretty_print_common(pp) # :nodoc:
-                pp.group(2, '{', '}') do
+                pp.group(2, "{", "}") do
                     pp.breakable
                     all_fields = get_fields.to_a
 
@@ -395,9 +401,9 @@ module Typelib
 
             def pretty_print(pp, verbose = false) # :nodoc:
                 super(pp)
-                pp.text ' '
+                pp.text " "
                 pretty_print_common(pp) do |name, offset, type, metadata|
-                    if (doc = metadata.get('doc').first)
+                    if (doc = metadata.get("doc").first)
                         pp.breakable if pp_doc(pp, doc)
                     end
                     pp.text name
@@ -409,7 +415,7 @@ module Typelib
                     pp.nest(2) do
                         type.pretty_print(pp, false)
                     end
-                    pp.text '>'
+                    pp.text ">"
                 end
             end
         end
@@ -426,7 +432,7 @@ module Typelib
         # Returns true if +name+ is a valid field name. It can either be given
         # as a string or a symbol
         def has_field?(name)
-            @field_types.has_key?(name)
+            @field_types.key?(name)
         end
 
         def [](name)
@@ -441,7 +447,6 @@ module Typelib
         def raw_get_field(name)
             raw_get(name)
         end
-
 
         def get(name)
             if @fields[name]
@@ -472,12 +477,9 @@ module Typelib
             if value.kind_of?(Type)
                 attribute = raw_get(name)
                 # If +value+ is already a typelib value, just do a plain copy
-                if attribute.kind_of?(Typelib::Type)
-                    return Typelib.copy(attribute, value)
-                end
+                return Typelib.copy(attribute, value) if attribute.kind_of?(Typelib::Type)
             end
             typelib_set_field(name, value)
-
         rescue ArgumentError => e
             if e.message =~ /^no field \w+ in /
                 raise e, (e.message + " in #{name}(#{self.class.name})"), e.backtrace
@@ -504,7 +506,6 @@ module Typelib
 
             value = Typelib.from_ruby(value, @field_types[name])
             raw_set_field(name.to_s, value)
-
         rescue TypeError => e
             raise e, "#{e.message} for #{self.class.name}.#{name}", e.backtrace
         end

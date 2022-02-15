@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 describe Typelib::ContainerType::StdVector do
     attr_reader :registry
@@ -9,7 +9,7 @@ describe Typelib::ContainerType::StdVector do
     describe "#raw_memcpy" do
         attr_reader :value_t
         before do
-            @value_t = registry.create_container '/std/vector', '/int32_t'
+            @value_t = registry.create_container "/std/vector", "/int32_t"
         end
 
         it "should successfully copy from a raw address" do
@@ -29,4 +29,3 @@ describe Typelib::ContainerType::StdVector do
         end
     end
 end
-

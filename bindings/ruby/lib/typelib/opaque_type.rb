@@ -3,5 +3,3 @@ module Typelib
     class OpaqueType < Type
     end
 end
-
-

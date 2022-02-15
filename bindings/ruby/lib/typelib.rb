@@ -360,7 +360,7 @@ module Typelib
     end
     @allocated_memory = 0
     @last_allocated_memory = 0
-    @allocated_memory_threshold = 50 * 1024 ** 2
+    @allocated_memory_threshold = 50 * 1024**2
 
     # A raw, untyped, memory zone
     class MemoryZone
@@ -370,35 +370,35 @@ module Typelib
     end
 end
 
-require 'typelib/cxx'
+require "typelib/cxx"
 
 # Finally, set guard types on the root classes
 module Typelib
-    class Type
+    class Type # :nodoc:
         initialize_base_class
     end
-    class NumericType
+    class NumericType # :nodoc:
         initialize_base_class
     end
-    class EnumType
+    class EnumType # :nodoc:
         initialize_base_class
     end
-    class CompoundType
+    class CompoundType # :nodoc:
         initialize_base_class
     end
-    class ContainerType
+    class ContainerType # :nodoc:
         initialize_base_class
     end
-    class ArrayType
+    class ArrayType # :nodoc:
         initialize_base_class
     end
-    class IndirectType
+    class IndirectType # :nodoc:
         initialize_base_class
     end
-    class OpaqueType
+    class OpaqueType # :nodoc:
         initialize_base_class
     end
-    class PointerType
+    class PointerType # :nodoc:
         initialize_base_class
     end
 end

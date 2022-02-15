@@ -22,9 +22,7 @@ module Typelib
             ".hxx" => "c",
             ".hpp" => "c",
             ".tlb" => "tlb"
-        }
-
-        TYPE_HANDLERS = Hash.new
+        }.freeze
 
         def dup
             copy = self.class.new
@@ -80,13 +78,14 @@ module Typelib
         #   @yieldparam [String] name the type name, it is different from type.name for
         #     aliases
         #   @yieldparam [Model<Typelib::Type>] type a type
-        def each(filter = nil, options = Hash.new, &block)
+        def each(filter = nil, options = {}, &block)
             if filter.kind_of?(Hash)
-                filter, options = nil, filter
+                options = filter
+                filter = nil
             end
 
             options = Kernel.validate_options options,
-                :with_aliases => false
+                                              with_aliases: false
 
             if !block_given?
                 enum_for(:each, filter, options)
@@ -107,9 +106,9 @@ module Typelib
 
         # Export this registry in the Ruby namespace. The base namespace under
         # which it should be done is given in +base_module+
-        def export_to_ruby(base_module, options = Hash.new, &block)
+        def export_to_ruby(base_module, options = {}, &block)
             base_module.extend RegistryExport
-            base_module.reset_registry_export(self, block, '/')
+            base_module.reset_registry_export(self, block, "/")
         end
 
         # Returns the file type as expected by Typelib from
@@ -131,14 +130,14 @@ module Typelib
             option_hash.to_a.collect do |opt|
                 if opt[1].kind_of?(Array)
                     if opt[1].first.kind_of?(Hash)
-                        [ opt[0].to_s, opt[1].map { |child| format_options(child) } ]
+                        [opt[0].to_s, opt[1].map { |child| format_options(child) }]
                     else
-                        [ opt[0].to_s, opt[1].map { |child| child.to_s } ]
+                        [opt[0].to_s, opt[1].map { |child| child.to_s }]
                     end
                 elsif opt[1].kind_of?(Hash)
-                    [ opt[0].to_s, format_options(opt[1]) ]
+                    [opt[0].to_s, format_options(opt[1])]
                 else
-                    [ opt[0].to_s, opt[1].to_s ]
+                    [opt[0].to_s, opt[1].to_s]
                 end
             end
         end
@@ -158,23 +157,28 @@ module Typelib
             if load_plugins || (load_plugins.nil? && Typelib.load_type_plugins?)
                 Typelib.load_typelib_plugins
             end
-            @export_typemap = Hash.new
+            @export_typemap = {}
             super()
+        end
+
+        @type_handlers = {}
+
+        def self.register_type_handler(file_type, handler)
+            @type_handlers[file_type] = handler
         end
 
         # Returns the handler that will be used to import that file. It can
         # either be a string, in which case we use a Typelib internal importer,
         # or a Ruby object responding to 'call' in which case Registry#import
         # will use that object to do the importing.
-        def self.handler_for(file, kind = 'auto')
+        def self.handler_for(file, kind = "auto")
             file = File.expand_path(file)
-            if !kind || kind == 'auto'
-                kind    = Registry.guess_type(file)
-            end
-            if handler = TYPE_HANDLERS[kind]
+            kind = Registry.guess_type(file) if !kind || kind == "auto"
+            if (handler = @type_handlers[kind])
                 return handler
             end
-            return kind
+
+            kind
         end
 
         # Imports the +file+ into this registry. +kind+ is the file format or
@@ -282,7 +286,7 @@ module Typelib
 
         # Export the registry into Typelib's own XML format
         def to_xml
-            export('tlb')
+            export("tlb")
         end
 
         # Helper class for Registry#create_compound
@@ -299,7 +303,9 @@ module Typelib
             attr_reader :size
 
             def initialize(name, registry, size = 0)
-                @name, @registry, @size = name, registry, size
+                @name = name
+                @registry = registry
+                @size = size
                 @fields = []
             end
 
@@ -397,10 +403,8 @@ module Typelib
         # @example create a new std::vector type
         #   registry.create_container "/std/vector", "/my/Container"
         def create_container(container_type, element_type, size = 0)
-            if element_type.respond_to?(:to_str)
-                element_type = build(element_type)
-            end
-            return define_container(container_type.to_str, element_type, size)
+            element_type = build(element_type) if element_type.respond_to?(:to_str)
+            define_container(container_type.to_str, element_type, size)
         end
 
         # Creates a new array type on this registry
@@ -412,10 +416,8 @@ module Typelib
         # @example create a new array of 10 elements
         #   registry.create_array "/my/Container", 10
         def create_array(base_type, element_count, size = 0)
-            if base_type.respond_to?(:name)
-                base_type = base_type.name
-            end
-            return build("#{base_type}[#{element_count}]", size)
+            base_type = base_type.name if base_type.respond_to?(:name)
+            build("#{base_type}[#{element_count}]", size)
         end
 
         # Helper class to build new enumeration types
@@ -431,15 +433,15 @@ module Typelib
             attr_reader :size
 
             def initialize(name, registry, size)
-                @name, @registry, @size = name, registry, size
+                @name = name
+                @registry = registry
+                @size = size
                 @symbols = []
             end
 
             # Creates the new enum type on the registry
             def build
-                if @symbols.empty?
-                    raise ArgumentError, "trying to create an empty enum"
-                end
+                raise ArgumentError, "trying to create an empty enum" if @symbols.empty?
 
                 # Create the values, if they are not provided
                 current_value = 0

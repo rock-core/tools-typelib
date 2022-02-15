@@ -1,6 +1,6 @@
-require 'typelib/test'
-require_relative './cxx_common_tests'
-require_relative './cxx_gccxml_common'
+require "typelib/test"
+require_relative "./cxx_common_tests"
+require_relative "./cxx_gccxml_common"
 
 class TC_CXX_GCCXML < Minitest::Test
     include Typelib
@@ -8,9 +8,8 @@ class TC_CXX_GCCXML < Minitest::Test
 
     def setup
         super
-        setup_loader 'gccxml'
+        setup_loader "gccxml"
     end
 
     include CXX_GCCXML_Common
 end
-

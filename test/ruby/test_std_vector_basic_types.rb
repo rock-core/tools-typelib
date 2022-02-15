@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 module Typelib
     %w{int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t double float}.each do |basic_type|
@@ -8,7 +8,7 @@ module Typelib
             before do
                 registry = Typelib::CXXRegistry.new
                 type = registry.get("/#{basic_type}")
-                @vector_t = registry.create_container '/std/vector', type
+                @vector_t = registry.create_container "/std/vector", type
                 @v = vector_t.new
                 @value =
                     if basic_type =~ /int/
@@ -97,4 +97,3 @@ module Typelib
         end
     end
 end
-
