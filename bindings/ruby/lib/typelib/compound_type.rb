@@ -105,11 +105,8 @@ module Typelib
             def dup
                 new_value = super()
                 self.class.converted_fields.each do |field_name|
-                    converted_value = instance_variable_get("@#{FIELD_NANE_PREFIX}#{field_name}")
-                    if !converted_value.kind_of?(Symbol)
-                        converted_value = converted_value.dup
-                    end
-                    instance_variable_set("@#{FIELD_NANE_PREFIX}#{field_name}", converted_value.dup)
+                    ivar = "@#{FIELD_NAME_PREFIX}#{field_name}"
+                    instance_variable_set(ivar, instance_variable_get(ivar).dup)
                 end
                 new_value
             end
