@@ -254,18 +254,6 @@ class TC_Value < Minitest::Test
         assert_equal("0,1,2,3,1.1,2.2,10,20,98,42,OUTPUT", comma_sep.join(","))
     end
 
-    def test_is_a
-        assert !Typelib::CompoundType.kind_of?("/A")
-
-        registry = make_registry
-        a = registry.get("/A").new
-        assert(a.kind_of?("/A"))
-        assert(a.kind_of?(/A$/))
-
-        assert(a.kind_of?(registry.get("/A")))
-        assert(a.kind_of?(registry.get("/int64_t")))
-    end
-
     def test_dup
         registry = make_registry
         a = registry.get("/A").new

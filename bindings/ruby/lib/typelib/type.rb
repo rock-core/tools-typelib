@@ -626,19 +626,6 @@ module Typelib
                 new_value
             end
 
-            # Check if this type is a +typename+. If +typename+
-            # is a string or a regexp, we match it against the type
-            # name. Otherwise we call Class#<
-            def is_a?(typename)
-                if typename.respond_to?(:to_str)
-                    typename.to_str === name
-                elsif Regexp === typename
-                    typename === name
-                else
-                    self <= typename
-                end
-            end
-
             # @return [Registry] a registry that contains only the types needed
             #   to define this type
             def minimal_registry(with_aliases: true)
