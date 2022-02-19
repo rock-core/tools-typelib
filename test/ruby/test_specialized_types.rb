@@ -39,6 +39,7 @@ class TC_SpecializedTypes < Minitest::Test
         assert_kind_of Typelib::MetaData, Typelib::IndirectType.metadata
         assert_kind_of Typelib::MetaData, Typelib::OpaqueType.metadata
         assert_kind_of Typelib::MetaData, Typelib::PointerType.metadata
+        assert_kind_of Typelib::MetaData, Typelib::CharacterType.metadata
         assert_kind_of Typelib::MetaData, Typelib::NumericType.metadata
         assert_kind_of Typelib::MetaData, Typelib::ArrayType.metadata
         assert_kind_of Typelib::MetaData, Typelib::CompoundType.metadata
@@ -479,7 +480,38 @@ class TC_SpecializedTypes < Minitest::Test
         assert_raises(UnknownConversionRequested) { long.from_ruby("10") }
     end
 
-    def test_string_handling
+    def test_character
+        registry = Typelib::Registry.new
+        registry.create_character "/char", 1
+        char_t = registry.get("/char")
+
+        assert(char_t < CharacterType)
+        assert_equal(1, char_t.size)
+
+        char = char_t.from_ruby("C")
+        assert_equal "C", char.to_ruby
+    end
+
+    def test_character_from_ruby
+        registry = Typelib::Registry.new
+        registry.create_character "/char", 1
+        char_t = registry.get("/char")
+
+        char = Typelib.from_ruby("C", char_t)
+        assert_kind_of Typelib::CharacterType, char
+        assert_equal "C", Typelib.to_ruby(char)
+    end
+
+    def test_character_from_ruby_raises_UnknownConversionRequested_when_converting_something_that_is_not_a_string_of_size_1 # rubocop:disable Naming/MethodName
+        registry = Typelib::Registry.new
+        registry.create_character "/char", 1
+        char_t = registry.get("/char")
+        assert_raises(UnknownConversionRequested) { char_t.from_ruby(10) }
+        assert_raises(UnknownConversionRequested) { char_t.from_ruby("") }
+        assert_raises(UnknownConversionRequested) { char_t.from_ruby("AB") }
+    end
+
+    def test_cstring_handling
         registry = Typelib::CXXRegistry.new
         char_pointer = registry.build("char*").new
         assert(char_pointer.string_handler?)
