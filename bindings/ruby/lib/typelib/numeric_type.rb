@@ -13,6 +13,10 @@ module Typelib
             end
         end
 
+        def self.fundamental_type?
+            true
+        end
+
         def self.from_ruby(value)
             v = new
             v.typelib_from_ruby(value)

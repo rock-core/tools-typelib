@@ -9,6 +9,10 @@ module Typelib
             convert_to_ruby(String, recursive: false, builtin: true)
         end
 
+        def self.fundamental_type?
+            true
+        end
+
         def self.from_ruby(value)
             v = new
             v.typelib_from_ruby(value)

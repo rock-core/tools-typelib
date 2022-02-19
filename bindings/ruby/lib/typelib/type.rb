@@ -129,6 +129,11 @@ module Typelib
                 result[:size] = size if options[:layout_info]
                 result
             end
+
+            # Whether this should be considered a fundamental or a user-defined type
+            def fundamental_type?
+                false
+            end
         end
         @convertions_from_ruby = {}
 
