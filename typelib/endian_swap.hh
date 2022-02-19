@@ -3,6 +3,7 @@
 
 #include <boost/integer.hpp>
 #include <boost/predef/other/endian.h>
+#include <cstdint>
 
 namespace Typelib
 {
@@ -16,7 +17,7 @@ namespace Typelib
             template<int size> struct type_from_size
             { typedef typename boost::uint_t<size>::least least; };
             template<> struct type_from_size<64>
-            { typedef uint64_t least; };
+            { typedef std::uint64_t least; };
 
             template<int size, typename D>
             void swap_helper(const D data, D& buffer);

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <typelib/value_ops.hh>
 #include <string>
 #include <boost/lexical_cast.hpp>
@@ -56,7 +57,7 @@ void Typelib::display(std::ostream& io, MemoryLayout::const_iterator const begin
 
 
 boost::tuple<size_t, MemoryLayout::const_iterator> ValueOps::dump(
-        boost::uint8_t const* data, size_t in_offset,
+        std::uint8_t const* data, size_t in_offset,
         OutputStream& stream, MemoryLayout::const_iterator const begin, MemoryLayout::const_iterator const end)
 {
     MemoryLayout::const_iterator it;
@@ -101,8 +102,8 @@ boost::tuple<size_t, MemoryLayout::const_iterator> ValueOps::dump(
                 void const* container_ptr  = data + in_offset;
                 in_offset += type->getSize();
 
-                boost::uint64_t element_count = type->getElementCount(container_ptr);
-                stream.write(reinterpret_cast< boost::uint8_t* >(&element_count), sizeof(element_count));
+                std::uint64_t element_count = type->getElementCount(container_ptr);
+                stream.write(reinterpret_cast< std::uint8_t* >(&element_count), sizeof(element_count));
 
                 if (element_count == 0)
                     it = MemoryLayout::skipBlock(++it, end);
@@ -122,7 +123,7 @@ boost::tuple<size_t, MemoryLayout::const_iterator> ValueOps::dump(
 }
 
 boost::tuple<size_t, MemoryLayout::const_iterator> ValueOps::load(
-        boost::uint8_t* data, size_t out_offset,
+        std::uint8_t* data, size_t out_offset,
         InputStream& stream, MemoryLayout::const_iterator const begin, MemoryLayout::const_iterator const end)
 {
     MemoryLayout::const_iterator it;
@@ -168,8 +169,8 @@ boost::tuple<size_t, MemoryLayout::const_iterator> ValueOps::load(
                 void* container_ptr  = data + out_offset;
                 out_offset += type->getSize();
 
-                boost::uint64_t element_count;
-                stream.read(reinterpret_cast< boost::uint8_t* >(&element_count), sizeof( boost::uint64_t ));
+                std::uint64_t element_count;
+                stream.read(reinterpret_cast< std::uint8_t* >(&element_count), sizeof( std::uint64_t ));
                 if (element_count == 0)
                     it = MemoryLayout::skipBlock(++it, end);
                 else
@@ -198,11 +199,11 @@ void Typelib::init(Value v)
 
 void Typelib::init(Value v, MemoryLayout const& ops)
 {
-    boost::uint8_t* buffer = reinterpret_cast< boost::uint8_t* >(v.getData());
+    std::uint8_t* buffer = reinterpret_cast< std::uint8_t* >(v.getData());
     init(buffer, ops);
 }
 
-void Typelib::init(boost::uint8_t* data, MemoryLayout const& ops)
+void Typelib::init(std::uint8_t* data, MemoryLayout const& ops)
 {
     ValueOps::init(data, ops.init_begin(), ops.init_end());
 }
@@ -215,28 +216,28 @@ void Typelib::zero(Value v)
 
 void Typelib::zero(Value v, MemoryLayout const& ops)
 {
-    boost::uint8_t* buffer = reinterpret_cast< boost::uint8_t* >(v.getData());
+    std::uint8_t* buffer = reinterpret_cast< std::uint8_t* >(v.getData());
     zero(buffer, ops);
 }
 
-void Typelib::zero(boost::uint8_t* data, MemoryLayout const& ops)
+void Typelib::zero(std::uint8_t* data, MemoryLayout const& ops)
 {
     ValueOps::zero(data, ops.begin(), ops.end());
 }
 
 void Typelib::destroy(Value v)
 {
-    boost::uint8_t* buffer = reinterpret_cast< boost::uint8_t* >(v.getData());
+    std::uint8_t* buffer = reinterpret_cast< std::uint8_t* >(v.getData());
     MemoryLayout ops = layout_of(v.getType());
     destroy(buffer, ops);
 }
 
 void Typelib::destroy(Value v, MemoryLayout const& ops)
 {
-    destroy(reinterpret_cast< boost::uint8_t* >(v.getData()), ops);
+    destroy(reinterpret_cast< std::uint8_t* >(v.getData()), ops);
 }
 
-void Typelib::destroy(boost::uint8_t* data, MemoryLayout const& ops)
+void Typelib::destroy(std::uint8_t* data, MemoryLayout const& ops)
 {
     ValueOps::destroy(data, ops.begin(), ops.end());
 }
@@ -256,8 +257,8 @@ void Typelib::copy(void* dst, void* src, MemoryLayout const& ops)
         // same object, nothing to do
         return;
     }
-    boost::uint8_t* out_buffer = reinterpret_cast< boost::uint8_t* >(dst);
-    boost::uint8_t* in_buffer  = reinterpret_cast< boost::uint8_t* >(src);
+    std::uint8_t* out_buffer = reinterpret_cast< std::uint8_t* >(dst);
+    std::uint8_t* in_buffer  = reinterpret_cast< std::uint8_t* >(src);
     ValueOps::copy(out_buffer, in_buffer, ops.begin(), ops.end());
 }
 
@@ -276,8 +277,8 @@ bool Typelib::compare(Value dst, Value src)
 
 bool Typelib::compare(void* dst, void* src, Type const& type)
 {
-    boost::uint8_t* out_buffer = reinterpret_cast< boost::uint8_t* >(dst);
-    boost::uint8_t* in_buffer  = reinterpret_cast< boost::uint8_t* >(src);
+    std::uint8_t* out_buffer = reinterpret_cast< std::uint8_t* >(dst);
+    std::uint8_t* in_buffer  = reinterpret_cast< std::uint8_t* >(src);
 
     MemoryLayout layout = layout_of(type, true, false, false, true);
 
@@ -287,8 +288,8 @@ bool Typelib::compare(void* dst, void* src, Type const& type)
     return is_equal;
 }
 
-boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
-    Typelib::ValueOps::zero(boost::uint8_t* buffer,
+boost::tuple< std::uint8_t*, MemoryLayout::const_iterator>
+    Typelib::ValueOps::zero(std::uint8_t* buffer,
         MemoryLayout::const_iterator begin,
         MemoryLayout::const_iterator end)
 {
@@ -338,7 +339,7 @@ boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
     return boost::make_tuple(buffer, it);
 }
 
-boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
+boost::tuple< std::uint8_t*, MemoryLayout::const_iterator>
     Typelib::ValueOps::init(uint8_t* buffer,
         MemoryLayout::const_iterator begin,
         MemoryLayout::const_iterator end)
@@ -395,8 +396,8 @@ boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
     return boost::make_tuple(buffer, it);
 }
 
-boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
-    Typelib::ValueOps::destroy(boost::uint8_t* buffer,
+boost::tuple< std::uint8_t*, MemoryLayout::const_iterator>
+    Typelib::ValueOps::destroy(std::uint8_t* buffer,
         MemoryLayout::const_iterator begin,
         MemoryLayout::const_iterator end)
 {
@@ -443,8 +444,8 @@ boost::tuple< boost::uint8_t*, MemoryLayout::const_iterator>
     return boost::make_tuple(buffer, it);
 }
 
-boost::tuple< boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterator>
-    Typelib::ValueOps::copy(boost::uint8_t* out_buffer, boost::uint8_t* in_buffer,
+boost::tuple< std::uint8_t*, std::uint8_t*, MemoryLayout::const_iterator>
+    Typelib::ValueOps::copy(std::uint8_t* out_buffer, std::uint8_t* in_buffer,
         MemoryLayout::const_iterator begin,
         MemoryLayout::const_iterator end)
 {
@@ -500,8 +501,8 @@ boost::tuple< boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterator>
     return boost::make_tuple(out_buffer, in_buffer, it);
 }
 
-boost::tuple<bool, boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterator>
-    Typelib::ValueOps::compare(boost::uint8_t* out_buffer, boost::uint8_t* in_buffer,
+boost::tuple<bool, std::uint8_t*, std::uint8_t*, MemoryLayout::const_iterator>
+    Typelib::ValueOps::compare(std::uint8_t* out_buffer, std::uint8_t* in_buffer,
         MemoryLayout::const_iterator begin,
         MemoryLayout::const_iterator end)
 {
@@ -515,8 +516,8 @@ boost::tuple<bool, boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterato
             {
                 size_t size = *(++it);
                 if (memcmp(out_buffer, in_buffer, size))
-                    return boost::make_tuple(false, (boost::uint8_t *)NULL,
-                                             (boost::uint8_t *)NULL, end);
+                    return boost::make_tuple(false, (std::uint8_t *)NULL,
+                                             (std::uint8_t *)NULL, end);
 
                 out_buffer += size;
                 in_buffer  += size;
@@ -539,8 +540,8 @@ boost::tuple<bool, boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterato
                     boost::tie(is_equal, out_buffer, in_buffer, it) =
                         compare(out_buffer, in_buffer, element_it, end);
                     if (!is_equal)
-                        return boost::make_tuple(false, (boost::uint8_t *)NULL,
-                                                 (boost::uint8_t *)NULL, end);
+                        return boost::make_tuple(false, (std::uint8_t *)NULL,
+                                                 (std::uint8_t *)NULL, end);
                 }
 
                 if (it == end || *it != MemLayout::FLAG_END)
@@ -551,8 +552,8 @@ boost::tuple<bool, boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterato
             {
                 Container const* type = reinterpret_cast<Container const*>(*(++it));
                 if (!type->compare(out_buffer, in_buffer))
-                    return boost::make_tuple(false, (boost::uint8_t *)NULL,
-                                             (boost::uint8_t *)NULL, end);
+                    return boost::make_tuple(false, (std::uint8_t *)NULL,
+                                             (std::uint8_t *)NULL, end);
 
                 it = MemoryLayout::skipBlock(it, end);
                 out_buffer += type->getSize();
@@ -570,39 +571,39 @@ boost::tuple<bool, boost::uint8_t*, boost::uint8_t*, MemoryLayout::const_iterato
 
 
 
-std::vector< boost::uint8_t > Typelib::dump(Value v)
+std::vector< std::uint8_t > Typelib::dump(Value v)
 {
-    std::vector< boost::uint8_t > buffer;
+    std::vector< std::uint8_t > buffer;
     dump(v, buffer);
     return buffer;
 }
 
 /*--------------------------------------------------
- * Dump support to std::vector< boost::uint8_t >
+ * Dump support to std::vector< std::uint8_t >
  */
 struct VectorOutputStream : public OutputStream
 {
-    std::vector< boost::uint8_t >& buffer;
-    VectorOutputStream(std::vector< boost::uint8_t >& buffer)
+    std::vector< std::uint8_t >& buffer;
+    VectorOutputStream(std::vector< std::uint8_t >& buffer)
         : buffer(buffer) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     {
         size_t out_index = buffer.size(); buffer.resize(out_index + size);
         memcpy(&buffer[out_index], data, size);
     }
 };
-void Typelib::dump(Value v, std::vector< boost::uint8_t >& buffer)
+void Typelib::dump(Value v, std::vector< std::uint8_t >& buffer)
 {
     VectorOutputStream stream(buffer);
     return dump(v, stream);
 }
-void Typelib::dump(Value v, std::vector< boost::uint8_t >& buffer, MemoryLayout const& ops)
+void Typelib::dump(Value v, std::vector< std::uint8_t >& buffer, MemoryLayout const& ops)
 {
     VectorOutputStream stream(buffer);
     return dump(v, stream, ops);
 }
-void Typelib::dump( boost::uint8_t const* v, std::vector< boost::uint8_t >& buffer, MemoryLayout const& ops)
+void Typelib::dump( std::uint8_t const* v, std::vector< std::uint8_t >& buffer, MemoryLayout const& ops)
 {
     VectorOutputStream stream(buffer);
     return dump(v, stream, ops);
@@ -617,7 +618,7 @@ struct OstreamOutputStream : public OutputStream
     OstreamOutputStream(std::ostream& stream)
         : stream(stream) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     {
         stream.write(reinterpret_cast<char const*>(data), size);
     }
@@ -632,7 +633,7 @@ void Typelib::dump(Value v, std::ostream& ostream, MemoryLayout const& ops)
     OstreamOutputStream stream(ostream);
     return dump(v, stream, ops);
 }
-void Typelib::dump(boost::uint8_t const* v, std::ostream& ostream, MemoryLayout const& ops)
+void Typelib::dump(std::uint8_t const* v, std::ostream& ostream, MemoryLayout const& ops)
 {
     OstreamOutputStream stream(ostream);
     return dump(v, stream, ops);
@@ -648,7 +649,7 @@ struct FDOutputStream : public OutputStream
     FDOutputStream(int fd)
         : fd(fd) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     {
         ssize_t ret = ::write(fd, data, size);
         if (ret < 0) {
@@ -671,7 +672,7 @@ void Typelib::dump(Value v, int fd, MemoryLayout const& ops)
     FDOutputStream stream(fd);
     return dump(v, stream, ops);
 }
-void Typelib::dump(boost::uint8_t const* v, int fd, MemoryLayout const& ops)
+void Typelib::dump(std::uint8_t const* v, int fd, MemoryLayout const& ops)
 {
     FDOutputStream stream(fd);
     return dump(v, stream, ops);
@@ -687,7 +688,7 @@ struct FileOutputStream : public OutputStream
     FileOutputStream(FILE* fd)
         : fd(fd) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     {
         ::fwrite(data, size, 1, fd);
     }
@@ -702,7 +703,7 @@ void Typelib::dump(Value v, FILE* fd, MemoryLayout const& ops)
     FileOutputStream stream(fd);
     return dump(v, stream, ops);
 }
-void Typelib::dump(boost::uint8_t const* v, FILE* fd, MemoryLayout const& ops)
+void Typelib::dump(std::uint8_t const* v, FILE* fd, MemoryLayout const& ops)
 {
     FileOutputStream stream(fd);
     return dump(v, stream, ops);
@@ -719,9 +720,9 @@ void Typelib::dump(Value v, OutputStream& stream)
 }
 void Typelib::dump(Value v, OutputStream& stream, MemoryLayout const& ops)
 {
-    return dump(reinterpret_cast< boost::uint8_t* >(v.getData()), stream, ops);
+    return dump(reinterpret_cast< std::uint8_t* >(v.getData()), stream, ops);
 }
-void Typelib::dump(boost::uint8_t const* v, OutputStream& stream, MemoryLayout const& ops)
+void Typelib::dump(std::uint8_t const* v, OutputStream& stream, MemoryLayout const& ops)
 {
     MemoryLayout::const_iterator end = ValueOps::dump(
             v, 0, stream, ops.begin(), ops.end()).get<1>();
@@ -738,13 +739,13 @@ void Typelib::dump(boost::uint8_t const* v, OutputStream& stream, MemoryLayout c
  */
 struct ByteArrayOutputStream : public OutputStream
 {
-    boost::uint8_t* buffer;
+    std::uint8_t* buffer;
     unsigned int   buffer_size;
     unsigned int   current;
-    ByteArrayOutputStream(boost::uint8_t* buffer, int buffer_size)
+    ByteArrayOutputStream(std::uint8_t* buffer, int buffer_size)
         : buffer(buffer), buffer_size(buffer_size), current(0) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     {
         if (current + size > buffer_size)
             throw std::exception();
@@ -753,17 +754,17 @@ struct ByteArrayOutputStream : public OutputStream
         current += size;
     }
 };
-int Typelib::dump(Value v, boost::uint8_t* buffer, unsigned int buffer_size)
+int Typelib::dump(Value v, std::uint8_t* buffer, unsigned int buffer_size)
 {
     MemoryLayout ops = layout_of(v.getType());
     return dump(v, buffer, buffer_size, ops);
 }
 
-int Typelib::dump(Value v, boost::uint8_t* buffer, unsigned int buffer_size, MemoryLayout const& ops)
+int Typelib::dump(Value v, std::uint8_t* buffer, unsigned int buffer_size, MemoryLayout const& ops)
 {
-    return dump(reinterpret_cast< boost::uint8_t const* >(v.getData()), buffer, buffer_size, ops);
+    return dump(reinterpret_cast< std::uint8_t const* >(v.getData()), buffer, buffer_size, ops);
 }
-int Typelib::dump(boost::uint8_t const* v, boost::uint8_t* buffer, unsigned int buffer_size, MemoryLayout const& ops)
+int Typelib::dump(std::uint8_t const* v, std::uint8_t* buffer, unsigned int buffer_size, MemoryLayout const& ops)
 {
     ByteArrayOutputStream stream(buffer, buffer_size);
     MemoryLayout::const_iterator end;
@@ -791,7 +792,7 @@ struct ByteCounterStream : public OutputStream
     ByteCounterStream()
         : result(0) {}
 
-    void write(boost::uint8_t const* data, size_t size)
+    void write(std::uint8_t const* data, size_t size)
     { result += size; }
 };
 size_t Typelib::getDumpSize(Value v)
@@ -800,8 +801,8 @@ size_t Typelib::getDumpSize(Value v)
     return getDumpSize(v, ops);
 }
 size_t Typelib::getDumpSize(Value v, MemoryLayout const& ops)
-{ return getDumpSize(reinterpret_cast< boost::uint8_t const* >(v.getData()), ops); }
-size_t Typelib::getDumpSize(boost::uint8_t const* v, MemoryLayout const& ops)
+{ return getDumpSize(reinterpret_cast< std::uint8_t const* >(v.getData()), ops); }
+size_t Typelib::getDumpSize(std::uint8_t const* v, MemoryLayout const& ops)
 {
     ByteCounterStream counter;
     ValueOps::dump(v, 0, counter, ops.begin(), ops.end());
@@ -822,8 +823,8 @@ void Typelib::load(Value v, InputStream& stream)
     return load(v, stream, ops);
 }
 void Typelib::load(Value v, InputStream& stream, MemoryLayout const& ops)
-{ load(reinterpret_cast< boost::uint8_t* >(v.getData()), v.getType(), stream, ops); }
-void Typelib::load(boost::uint8_t* v, Type const& type, InputStream& stream, MemoryLayout const& ops)
+{ load(reinterpret_cast< std::uint8_t* >(v.getData()), v.getType(), stream, ops); }
+void Typelib::load(std::uint8_t* v, Type const& type, InputStream& stream, MemoryLayout const& ops)
 {
     MemoryLayout::const_iterator it;
     size_t out_offset;
@@ -834,17 +835,17 @@ void Typelib::load(boost::uint8_t* v, Type const& type, InputStream& stream, Mem
 }
 
 /*--------------------------------------------------
- * Load support from std::vector< boost::uint8_t >
+ * Load support from std::vector< std::uint8_t >
  */
 struct VectorInputStream : public InputStream
 {
-    std::vector< boost::uint8_t > const& buffer;
+    std::vector< std::uint8_t > const& buffer;
     size_t in_index;
 
-    VectorInputStream(std::vector< boost::uint8_t > const& buffer)
+    VectorInputStream(std::vector< std::uint8_t > const& buffer)
         : buffer(buffer), in_index(0) {}
 
-    void read(boost::uint8_t* out_buffer, size_t size)
+    void read(std::uint8_t* out_buffer, size_t size)
     {
         if (size + in_index > buffer.size())
             throw std::runtime_error(
@@ -858,14 +859,14 @@ struct VectorInputStream : public InputStream
         in_index += size;
     }
 };
-void Typelib::load(Value v, std::vector< boost::uint8_t > const& buffer)
+void Typelib::load(Value v, std::vector< std::uint8_t > const& buffer)
 {
     MemoryLayout ops = layout_of(v.getType());
     return load(v, buffer, ops);
 }
-void Typelib::load(Value v, std::vector< boost::uint8_t > const& buffer, MemoryLayout const& ops)
-{ load(reinterpret_cast< boost::uint8_t* >(v.getData()), v.getType(), buffer, ops); }
-void Typelib::load(boost::uint8_t* v, Type const& type, std::vector< boost::uint8_t > const& buffer, MemoryLayout const& ops)
+void Typelib::load(Value v, std::vector< std::uint8_t > const& buffer, MemoryLayout const& ops)
+{ load(reinterpret_cast< std::uint8_t* >(v.getData()), v.getType(), buffer, ops); }
+void Typelib::load(std::uint8_t* v, Type const& type, std::vector< std::uint8_t > const& buffer, MemoryLayout const& ops)
 {
     MemoryLayout::const_iterator it;
     VectorInputStream stream(buffer);
@@ -891,14 +892,14 @@ void Typelib::load(boost::uint8_t* v, Type const& type, std::vector< boost::uint
  */
 struct ByteArrayInputStream : public InputStream
 {
-    boost::uint8_t const* buffer;
+    std::uint8_t const* buffer;
     unsigned int buffer_size;
     unsigned int in_index;
 
-    ByteArrayInputStream(boost::uint8_t const* buffer, int buffer_size)
+    ByteArrayInputStream(std::uint8_t const* buffer, int buffer_size)
         : buffer(buffer), buffer_size(buffer_size), in_index(0) {}
 
-    void read(boost::uint8_t* out_buffer, size_t size)
+    void read(std::uint8_t* out_buffer, size_t size)
     {
         if (size + in_index > buffer_size)
             throw std::runtime_error(
@@ -912,14 +913,14 @@ struct ByteArrayInputStream : public InputStream
         in_index += size;
     }
 };
-void Typelib::load(Value v, boost::uint8_t const* buffer, unsigned int buffer_size)
+void Typelib::load(Value v, std::uint8_t const* buffer, unsigned int buffer_size)
 {
     MemoryLayout ops = layout_of(v.getType());
     return load(v, buffer, buffer_size, ops);
 }
-void Typelib::load(Value v, boost::uint8_t const* buffer, unsigned int buffer_size, MemoryLayout const& ops)
-{ load(reinterpret_cast< boost::uint8_t* >(v.getData()), v.getType(), buffer, buffer_size, ops); }
-void Typelib::load(boost::uint8_t* v, Type const& type, boost::uint8_t const* buffer, unsigned int buffer_size, MemoryLayout const& ops)
+void Typelib::load(Value v, std::uint8_t const* buffer, unsigned int buffer_size, MemoryLayout const& ops)
+{ load(reinterpret_cast< std::uint8_t* >(v.getData()), v.getType(), buffer, buffer_size, ops); }
+void Typelib::load(std::uint8_t* v, Type const& type, std::uint8_t const* buffer, unsigned int buffer_size, MemoryLayout const& ops)
 {
     MemoryLayout::const_iterator it;
     ByteArrayInputStream stream(buffer, buffer_size);
