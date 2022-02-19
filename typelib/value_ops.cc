@@ -1,4 +1,3 @@
-#include <boost/cstdint.hpp>
 #include <typelib/value_ops.hh>
 #include <string>
 #include <boost/lexical_cast.hpp>
