@@ -86,6 +86,7 @@ namespace
     {
         list<string>  m_output;
         bool m_char_as_numeric;
+        std::string m_string_delimeter;
 
     protected:
         template<typename T>
@@ -99,6 +100,18 @@ namespace
         {
             display("<" + type.getName() + ">");
             return true;
+        }
+        virtual bool visit_ (Value const& v, Container const& a)
+        {
+            if (a.getName() == "/std/string"){
+                std::string* string_ptr =
+                    reinterpret_cast< std::string* >(v.getData());
+                m_output.push_back(m_string_delimeter + *string_ptr + m_string_delimeter);
+
+                return true;
+            }
+
+           return ValueVisitor::visit_(v,a);
         }
         bool visit_ (int8_t  & value)
         {
@@ -131,10 +144,11 @@ namespace
         }
 
     public:
-        list<string> apply(Value const& value, bool char_as_numeric)
+        list<string> apply(Value const& value, bool char_as_numeric, std::string string_delimeter)
         {
             m_output.clear();
             m_char_as_numeric = char_as_numeric;
+            m_string_delimeter = string_delimeter;
             ValueVisitor::apply(value);
             return m_output;
         }
@@ -142,8 +156,8 @@ namespace
 }
 
 
-CSVOutput::CSVOutput(Type const& type, std::string const& sep, bool char_as_numeric = true)
-    : m_type(type), m_separator(sep), m_char_as_numeric(char_as_numeric) {}
+CSVOutput::CSVOutput(Type const& type, std::string const& sep, bool char_as_numeric = true, const string &string_delim)
+    : m_type(type), m_separator(sep), m_char_as_numeric(char_as_numeric), m_string_delimeter(string_delim) {}
 
 /** Displays the header */
 void CSVOutput::header(std::ostream& out, std::string const& basename)
@@ -155,6 +169,6 @@ void CSVOutput::header(std::ostream& out, std::string const& basename)
 void CSVOutput::display(std::ostream& out, void* value)
 {
     LineVisitor visitor;
-    out << join(visitor.apply( Value(value, m_type), m_char_as_numeric ), m_separator );
+    out << join(visitor.apply( Value(value, m_type), m_char_as_numeric, m_string_delimeter), m_separator );
 }
 
