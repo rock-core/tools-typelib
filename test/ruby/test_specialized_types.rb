@@ -1,7 +1,7 @@
-require 'typelib/test'
+require "typelib/test"
 
 class TC_SpecializedTypes < Minitest::Test
-    SRCDIR = File.expand_path('..', File.dirname(__FILE__))
+    SRCDIR = File.expand_path("..", File.dirname(__FILE__))
 
     include Typelib
     def setup
@@ -9,22 +9,22 @@ class TC_SpecializedTypes < Minitest::Test
 
         @registry = Typelib::Registry.new
         Typelib::Registry.add_standard_cxx_types(@registry)
-        registry.create_container '/std/vector', '/int8_t'
-        registry.create_compound '/compounds/Subfield' do |t|
-            t.plain = '/int8_t'
-            t.vector = '/std/vector</int8_t>'
+        registry.create_container "/std/vector", "/int8_t"
+        registry.create_compound "/compounds/Subfield" do |t|
+            t.plain = "/int8_t"
+            t.vector = "/std/vector</int8_t>"
         end
-        registry.create_container '/std/vector', '/compounds/Subfield'
-        @compound_t = registry.create_compound '/compounds/Test' do |t|
-            t.plain = '/int8_t'
-            t.compound = '/compounds/Subfield'
-            t.plain_vector = '/std/vector</int8_t>'
-            t.vector = '/std/vector</compounds/Subfield>'
+        registry.create_container "/std/vector", "/compounds/Subfield"
+        @compound_t = registry.create_compound "/compounds/Test" do |t|
+            t.plain = "/int8_t"
+            t.compound = "/compounds/Subfield"
+            t.plain_vector = "/std/vector</int8_t>"
+            t.vector = "/std/vector</compounds/Subfield>"
         end
 
-        @array_t= registry.create_array '/compounds/Test', 3
+        @array_t = registry.create_array "/compounds/Test", 3
 
-        @root_t = registry.create_compound '/Root' do |t|
+        @root_t = registry.create_compound "/Root" do |t|
             t.compound = compound_t
             t.array = array_t
         end
@@ -52,8 +52,8 @@ class TC_SpecializedTypes < Minitest::Test
     def make_registry
         registry = Registry.new
         testfile = File.join(SRCDIR, "test_cimport.1")
-        assert_raises(RuntimeError) { registry.import( testfile  ) }
-        registry.import( testfile, "c" )
+        assert_raises(RuntimeError) { registry.import(testfile) }
+        registry.import(testfile, "c")
 
         registry
     end
@@ -62,31 +62,30 @@ class TC_SpecializedTypes < Minitest::Test
         t = compound_t
         assert(t < Typelib::CompoundType)
 
-        fields = [['plain', registry.get('/int8_t')],
-            ['compound', registry.get('/compounds/Subfield')],
-            ['plain_vector', registry.get('/std/vector</int8_t>')],
-            ['vector', registry.get('/std/vector</compounds/Subfield>')]]
+        fields = [["plain", registry.get("/int8_t")],
+                  ["compound", registry.get("/compounds/Subfield")],
+                  ["plain_vector", registry.get("/std/vector</int8_t>")],
+                  ["vector", registry.get("/std/vector</compounds/Subfield>")]]
         assert_equal fields, t.fields
 
-        assert_same(fields[0][1], t['plain'])
-        assert_same(fields[1][1], t['compound'])
-        assert_same(fields[2][1], t['plain_vector'])
-        assert_same(fields[3][1], t['vector'])
+        assert_same(fields[0][1], t["plain"])
+        assert_same(fields[1][1], t["compound"])
+        assert_same(fields[2][1], t["plain_vector"])
+        assert_same(fields[3][1], t["vector"])
     end
 
-    def test_CompoundType_get_fields
+    def test_CompoundType_get_fields # rubocop:disable Naming/MethodName
         Typelib::CompoundType.get_fields
     end
 
     def test_compound_inititialize_with_hash
-        expected_value = { :plain => 10,
-            :compound => { :plain => 10, :vector => [1, 2, 3, 5] },
-            :plain_vector => [4, 5, 8, 10],
-            :vector => [
-                { :plain => 1, :vector => [1, 2, 3, 5] },
-                { :plain => 5, :vector => [2, 3, 4, 6] }
-            ]
-        }
+        expected_value = { plain: 10,
+                           compound: { plain: 10, vector: [1, 2, 3, 5] },
+                           plain_vector: [4, 5, 8, 10],
+                           vector: [
+                               { plain: 1, vector: [1, 2, 3, 5] },
+                               { plain: 5, vector: [2, 3, 4, 6] }
+                           ] }
         compound = compound_t.new(expected_value)
         assert_kind_of compound_t, compound
         assert_typelib_value_equals expected_value, compound
@@ -110,9 +109,9 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_compound_raw_get
         registry = CXXRegistry.new
-        registry.create_container '/std/vector', '/double'
-        type = registry.create_compound '/Test' do |c|
-            c.field = '/std/vector</double>'
+        registry.create_container "/std/vector", "/double"
+        type = registry.create_compound "/Test" do |c|
+            c.field = "/std/vector</double>"
         end
 
         value = type.new
@@ -126,13 +125,13 @@ class TC_SpecializedTypes < Minitest::Test
         subfield_t = compound_t[:compound]
 
         value = compound_t.new
-        expected_value = { :plain => 10, :vector => [1, 2, 3, 5] }
+        expected_value = { plain: 10, vector: [1, 2, 3, 5] }
         subfield = Typelib.from_ruby(expected_value, subfield_t)
 
-        flexmock(Typelib).should_receive(:from_ruby).with(subfield, subfield_t).
-            and_return { |*args| args.first }.never
+        flexmock(Typelib).should_receive(:from_ruby).with(subfield, subfield_t)
+                         .and_return { |*args| args.first }.never
 
-        value.raw_set('compound', subfield)
+        value.raw_set("compound", subfield)
         assert_typelib_value_equals expected_value, value.compound
     end
 
@@ -140,25 +139,24 @@ class TC_SpecializedTypes < Minitest::Test
         subfield_t = compound_t[:compound]
 
         value = compound_t.new
-        expected_value = { :plain => 10, :vector => [1, 2, 3, 5] }
+        expected_value = { plain: 10, vector: [1, 2, 3, 5] }
         subfield = Typelib.from_ruby(expected_value, subfield_t)
 
-        flexmock(Typelib).should_receive(:from_ruby).with(any, subfield_t).
-            and_return { |*args| args.first }.once
+        flexmock(Typelib).should_receive(:from_ruby).with(any, subfield_t)
+                         .and_return { |*args| args.first }.once
 
-        value.set_field('compound', subfield)
+        value.set_field("compound", subfield)
         assert_typelib_value_equals expected_value, value.compound
     end
 
     def test_compound_convertion_from_hash
-        expected_value = { :plain => 10,
-            :compound => { :plain => 10, :vector => [1, 2, 3, 5] },
-            :plain_vector => [4, 5, 8, 10],
-            :vector => [
-                { :plain => 1, :vector => [1, 2, 3, 5] },
-                { :plain => 5, :vector => [2, 3, 4, 6] }
-            ]
-        }
+        expected_value = { plain: 10,
+                           compound: { plain: 10, vector: [1, 2, 3, 5] },
+                           plain_vector: [4, 5, 8, 10],
+                           vector: [
+                               { plain: 1, vector: [1, 2, 3, 5] },
+                               { plain: 5, vector: [2, 3, 4, 6] }
+                           ] }
         compound = Typelib.from_ruby(expected_value, compound_t)
         assert_kind_of compound_t, compound
         assert_typelib_value_equals expected_value, compound
@@ -187,14 +185,14 @@ class TC_SpecializedTypes < Minitest::Test
     def test_compound_access_methods_call_base_setters_and_getters
         value = compound_t.new
 
-        flexmock(value).should_receive(:set).
-            with('plain', 10).once.ordered.and_return
-        flexmock(value).should_receive(:raw_set).
-            with('plain', 10).once.ordered.and_return
-        flexmock(value).should_receive(:get).
-            with('plain').once.ordered.and_return(20)
-        flexmock(value).should_receive(:raw_get).
-            with('plain').once.ordered.and_return(20)
+        flexmock(value).should_receive(:set)
+                       .with("plain", 10).once.ordered.and_return
+        flexmock(value).should_receive(:raw_set)
+                       .with("plain", 10).once.ordered.and_return
+        flexmock(value).should_receive(:get)
+                       .with("plain").once.ordered.and_return(20)
+        flexmock(value).should_receive(:raw_get)
+                       .with("plain").once.ordered.and_return(20)
 
         value.plain = 10
         value.raw_plain = 10
@@ -213,17 +211,17 @@ class TC_SpecializedTypes < Minitest::Test
         value = compound_t.new
 
         flexmock(Typelib).should_receive(:copy).with(value.vector, element_t).once
-        value.vector = field
+        value.vector = field # rubocop:disable Lint/UselessSetterCall
     end
 
     def test_compound_method_overloading
-        t = registry.create_compound '/CompoundWithOverloadingClashes' do |compound_t|
+        t = registry.create_compound "/CompoundWithOverloadingClashes" do |compound_t|
             # should not be overloaded on the class, but OK on the instance
-            compound_t.name = '/int32_t'
+            compound_t.name = "/int32_t"
             # should not be overloaded on the instance, but OK on the class
-            compound_t.cast = '/int32_t'
+            compound_t.cast = "/int32_t"
             # should be overloaded in both cases
-            compound_t.object_id = '/int32_t'
+            compound_t.object_id = "/int32_t"
         end
 
         v = t.new
@@ -256,11 +254,11 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_array_plain_set_get
-        array_t = registry.create_array '/float', 10
+        array_t = registry.create_array "/float", 10
         array = array_t.new
 
         (0..(array.size - 1)).each do |i|
-            array[i] = Float(i)/10.0
+            array[i] = Float(i) / 10.0
         end
         (0..(array.size - 1)).each do |i|
             assert_in_delta(Float(i) / 10.0, array[i], 0.01)
@@ -268,7 +266,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_array_plain_initialize_from_ruby_array
-        array_t = registry.create_array '/int32_t', 10
+        array_t = registry.create_array "/int32_t", 10
         # Array too small
         assert_raises(ArgumentError) do
             array_t.new([0, 1, 2, 3, 4, 5])
@@ -280,7 +278,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_array_plain_raw_each
-        array_t = registry.create_array '/int32_t', 10
+        array_t = registry.create_array "/int32_t", 10
         array = array_t.new
         10.times do |i|
             array[i] = i
@@ -295,14 +293,13 @@ class TC_SpecializedTypes < Minitest::Test
         array_t = registry.create_array compound_t, 10
         array = array_t.new
 
-        expected_value = { :plain => 10,
-            :compound => { :plain => 10, :vector => [1, 2, 3, 5] },
-            :plain_vector => [4, 5, 8, 10],
-            :vector => [
-                { :plain => 1, :vector => [1, 2, 3, 5] },
-                { :plain => 5, :vector => [2, 3, 4, 6] }
-            ]
-        }
+        expected_value = { plain: 10,
+                           compound: { plain: 10, vector: [1, 2, 3, 5] },
+                           plain_vector: [4, 5, 8, 10],
+                           vector: [
+                               { plain: 1, vector: [1, 2, 3, 5] },
+                               { plain: 5, vector: [2, 3, 4, 6] }
+                           ] }
         compound = Typelib.from_ruby(expected_value, compound_t)
 
         (0..(array.size - 1)).each do |i|
@@ -327,7 +324,7 @@ class TC_SpecializedTypes < Minitest::Test
 
         compound = compound_t.new
         flexmock(Typelib).should_receive(:copy).with(array[3], compound).once
-        array[3] = compound
+        array[3] = compound # rubocop:disable Lint/UselessSetterCall
     end
 
     def test_array_complex_set_calls_raw_set
@@ -336,7 +333,7 @@ class TC_SpecializedTypes < Minitest::Test
 
         compound = compound_t.new
         flexmock(array).should_receive(:raw_set).with(3, compound).once
-        array[3] = compound
+        array[3] = compound # rubocop:disable Lint/UselessSetterCall
     end
 
     def test_array_complex_set_does_type_convertion
@@ -344,20 +341,19 @@ class TC_SpecializedTypes < Minitest::Test
         array = array_t.new
 
         compound = compound_t.new
-        flexmock(Typelib).should_receive(:from_ruby).with(compound, compound_t).once.
-            and_return { |val, type| val }
-        array[3] = compound
+        flexmock(Typelib).should_receive(:from_ruby).with(compound, compound_t).once
+                         .and_return { |val, type| val }
+        array[3] = compound # rubocop:disable Lint/UselessSetterCall
     end
-
 
     def test_enum
         registry = Typelib::Registry.new
-        registry.create_enum '/E' do |enum|
-            enum.add 'E_FIRST', 0
-            enum.add 'E_SECOND', 1
+        registry.create_enum "/E" do |enum|
+            enum.add "E_FIRST", 0
+            enum.add "E_SECOND", 1
         end
-        e_container = registry.create_compound '/EContainer' do |c|
-            c.add 'value', '/E'
+        e_container = registry.create_compound "/EContainer" do |c|
+            c.add "value", "/E"
         end
 
         e = e_container.new
@@ -373,14 +369,14 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_enum_can_cast_to_superset
         registry = Typelib::Registry.new
-        e_type = registry.create_enum '/E' do |enum|
-            enum.add 'E_FIRST', 0
-            enum.add 'E_SECOND', 1
+        e_type = registry.create_enum "/E" do |enum|
+            enum.add "E_FIRST", 0
+            enum.add "E_SECOND", 1
         end
-        e_modified = registry.create_enum '/E_modified' do |enum|
-            enum.add 'E_FIRST', 0
-            enum.add 'E_SECOND', 1
-            enum.add 'E_THIRD', 2
+        e_modified = registry.create_enum "/E_modified" do |enum|
+            enum.add "E_FIRST", 0
+            enum.add "E_SECOND", 1
+            enum.add "E_THIRD", 2
         end
         refute_equal e_type, e_modified
         assert e_type.casts_to?(e_modified)
@@ -388,13 +384,13 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_enum_cannot_cast_to_subset
         registry = Typelib::Registry.new
-        e_type = registry.create_enum '/E' do |enum|
-            enum.add 'E_FIRST', 0
-            enum.add 'E_SECOND', 1
+        e_type = registry.create_enum "/E" do |enum|
+            enum.add "E_FIRST", 0
+            enum.add "E_SECOND", 1
         end
-        e_modified = registry.create_enum '/E_modified' do |enum|
-            enum.add 'E_FIRST', 0
-            enum.add 'E_SECOND', 2
+        e_modified = registry.create_enum "/E_modified" do |enum|
+            enum.add "E_FIRST", 0
+            enum.add "E_SECOND", 2
         end
         refute_equal e_type, e_modified
         refute e_type.casts_to?(e_modified)
@@ -402,10 +398,10 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_enum_cannot_cast_to_modified
         registry = make_registry
-        e_type  = registry.get("E")
+        e_type = registry.get("E")
         e_modified = registry.get("E_comparison_2/E_with_modified_values")
         assert(!(e_type == e_modified))
-        assert(!(e_modified.casts_to?(e_type)))
+        assert(!e_modified.casts_to?(e_type))
     end
 
     def test_enum_to_ruby
@@ -413,7 +409,7 @@ class TC_SpecializedTypes < Minitest::Test
         e_type = registry.get("EContainer")
         e = e_type.new
         e.value = 0
-        enum = e.raw_get('value')
+        enum = e.raw_get("value")
         assert_kind_of Typelib::EnumType, enum
         sym = Typelib.to_ruby(enum)
         assert_kind_of Symbol, sym
@@ -422,7 +418,7 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_enum_from_ruby
         registry = make_registry
-        e_type = registry.get("EContainer")['value']
+        e_type = registry.get("EContainer")["value"]
         enum = Typelib.from_ruby(:E_FIRST, e_type)
         assert_kind_of Typelib::EnumType, enum
         assert_equal :E_FIRST, Typelib.to_ruby(enum)
@@ -430,9 +426,9 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_numeric
         registry = Typelib::Registry.new
-        registry.create_numeric '/int32_t', 4, :sint
-        registry.create_numeric '/uint32_t', 4, :uint
-        registry.create_numeric '/double', 8, :float
+        registry.create_numeric "/int32_t", 4, :sint
+        registry.create_numeric "/uint32_t", 4, :uint
+        registry.create_numeric "/double", 8, :float
 
         long = registry.get("/int32_t")
         assert(long < NumericType)
@@ -458,7 +454,7 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_numeric_to_ruby
         registry = Typelib::Registry.new
-        registry.create_numeric '/int32_t', 4, :sint
+        registry.create_numeric "/int32_t", 4, :sint
         long = registry.get("/int32_t")
         v = long.new
         v.zero!
@@ -469,40 +465,40 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_numeric_from_ruby
         registry = Typelib::Registry.new
-        registry.create_numeric '/int32_t', 4, :sint
+        registry.create_numeric "/int32_t", 4, :sint
         long = registry.get("/int32_t")
         zero = Typelib.from_ruby(0, long)
         assert_kind_of Typelib::NumericType, zero
         assert_equal 0, Typelib.to_ruby(zero)
     end
 
-    def test_numeric_from_ruby_raises_UnknownConversionRequested_when_converting_a_non_numeric
+    def test_numeric_from_ruby_raises_UnknownConversionRequested_when_converting_a_non_numeric # rubocop:disable Naming/MethodName
         registry = Typelib::Registry.new
-        registry.create_numeric '/int32_t', 4, :sint
+        registry.create_numeric "/int32_t", 4, :sint
         long = registry.get("/int32_t")
-        assert_raises(UnknownConversionRequested) { long.from_ruby('10') }
+        assert_raises(UnknownConversionRequested) { long.from_ruby("10") }
     end
 
     def test_string_handling
         registry = Typelib::CXXRegistry.new
-        char_pointer  = registry.build("char*").new
+        char_pointer = registry.build("char*").new
         assert(char_pointer.string_handler?)
         assert(char_pointer.respond_to?(:to_str))
     end
 
     def test_null
         registry = Typelib::Registry.new
-        registry.create_null '/void'
+        registry.create_null "/void"
         null = registry.get("/void")
         assert(null.null?)
     end
 
     def test_null_type_equality
         registry = Typelib::Registry.new
-        void_t = registry.create_null('/void')
-        nil_t  = registry.create_null('/nil')
+        void_t = registry.create_null("/void")
+        nil_t  = registry.create_null("/nil")
         other_registry = Typelib::Registry.new
-        other_void_t = other_registry.create_null('/void')
+        other_void_t = other_registry.create_null("/void")
 
         assert_equal void_t, other_void_t
         refute_equal void_t, nil_t
@@ -549,7 +545,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_container_of_container
-        std      = make_registry.get("StdCollections")
+        std = make_registry.get("StdCollections")
         assert(std[:v_of_v] < Typelib::ContainerType)
         assert(std[:v_of_v].deference < Typelib::ContainerType)
 
@@ -583,7 +579,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_container_raw_each
-        type = CXXRegistry.new.create_container '/std/vector', '/double'
+        type = CXXRegistry.new.create_container "/std/vector", "/double"
         value = type.new
         10.times do |i|
             value.push(i)
@@ -595,7 +591,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_container_raw_get
-        type = CXXRegistry.new.create_container '/std/vector', '/double'
+        type = CXXRegistry.new.create_container "/std/vector", "/double"
         value = type.new
         value.push(0)
         raw_value = value.raw_get(0)
@@ -604,7 +600,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_container_size
-        type = CXXRegistry.new.create_container "/std/vector", '/double'
+        type = CXXRegistry.new.create_container "/std/vector", "/double"
         value = type.new
         assert_equal 0, value.size
 
@@ -614,7 +610,7 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_create_container
         reg = Typelib::Registry.new
-        int32_t = reg.create_numeric '/int32_t', 4, :sint
+        int32_t = reg.create_numeric "/int32_t", 4, :sint
         assert_raises(ArgumentError) { reg.create_container("/blabla") }
         cont = reg.create_container "/std/vector", int32_t
 
@@ -632,15 +628,15 @@ class TC_SpecializedTypes < Minitest::Test
         assert value.empty?
         assert_equal 0, value.length
 
-        value.push(?a)
-        value.push(?b)
+        value.push("a")
+        value.push("b")
         assert_equal "ab", Typelib.to_ruby(value)
         assert_equal "a_string", Typelib.to_ruby(Typelib.from_ruby("a_string", reg.get("/std/string")))
     end
 
     def test_std_string_push
-        reg   = Typelib::CXXRegistry.new
-        string_t  = reg.get("/std/string")
+        reg = Typelib::CXXRegistry.new
+        string_t = reg.get("/std/string")
 
         str = Typelib.from_ruby("string", string_t)
         str << "1"
@@ -651,8 +647,8 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_std_string_concat
-        reg   = Typelib::CXXRegistry.new
-        string_t  = reg.get("/std/string")
+        reg = Typelib::CXXRegistry.new
+        string_t = reg.get("/std/string")
 
         str = Typelib.from_ruby("string1", string_t)
         str.concat("string2")
@@ -675,8 +671,8 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_boolean_in_struct
         reg = Typelib::CXXRegistry.new
-        reg.create_compound '/BoolHandling' do |c|
-            c.add 'value', '/bool'
+        reg.create_compound "/BoolHandling" do |c|
+            c.add "value", "/bool"
         end
 
         type = reg.get "BoolHandling"
@@ -690,7 +686,7 @@ class TC_SpecializedTypes < Minitest::Test
     end
 
     def test_vector_complex_get_returns_same_wrapper
-        vector_t = registry.create_container '/std/vector', compound_t
+        vector_t = registry.create_container "/std/vector", compound_t
         vector = vector_t.new
         5.times do
             vector << compound_t.new
@@ -701,7 +697,7 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_vector_freeze
         registry = Typelib::CXXRegistry.new
-        vector_t = registry.create_container '/std/vector', '/double'
+        vector_t = registry.create_container "/std/vector", "/double"
         vector = vector_t.new
 
         10.times do |i|
@@ -711,14 +707,14 @@ class TC_SpecializedTypes < Minitest::Test
         assert(vector.frozen?)
         assert_raises(TypeError) { vector.push(10) }
         assert_raises(TypeError) { vector.erase(10) }
-        assert_raises(TypeError) { vector.delete_if { } }
+        assert_raises(TypeError) { vector.delete_if {} }
         assert_raises(TypeError) { vector[0] = 10 }
         assert_equal(5, vector[5])
     end
 
     def test_vector_invalidate_refuses_toplevel_values
         registry = Typelib::CXXRegistry.new
-        vector_t = registry.create_container '/std/vector', '/double'
+        vector_t = registry.create_container "/std/vector", "/double"
         vector = vector_t.new
         assert_raises(ArgumentError) { vector.invalidate }
     end
@@ -735,13 +731,13 @@ class TC_SpecializedTypes < Minitest::Test
         assert(vector.invalidated?)
         assert_raises(TypeError) { vector.push(10) }
         assert_raises(TypeError) { vector.erase(10) }
-        assert_raises(TypeError) { vector.delete_if { } }
+        assert_raises(TypeError) { vector.delete_if {} }
         assert_raises(TypeError) { vector[0] }
         assert_raises(TypeError) { vector[0] = 10 }
     end
 
     def test_vector_erase_invalidates_last_elements
-        std      = make_registry.get("StdCollections")
+        std = make_registry.get("StdCollections")
         value_t = std[:v_of_v]
 
         value   = value_t.new
@@ -752,8 +748,9 @@ class TC_SpecializedTypes < Minitest::Test
         value.erase(element)
         assert last.invalidated?
     end
+
     def test_vector_delete_if_invalidates_last_elements
-        std      = make_registry.get("StdCollections")
+        std = make_registry.get("StdCollections")
         value_t = std[:v_of_v]
 
         value   = value_t.new
@@ -773,20 +770,20 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_compound_type_with_enum_fields_can_be_pretty_printed
         reg = Typelib::CXXRegistry.new
-        reg.create_enum '/E' do |e|
+        reg.create_enum "/E" do |e|
             e.add "VAL", 1
         end
-        compound_t = reg.create_compound '/C' do |c|
-            c.add 'e', '/E'
+        compound_t = reg.create_compound "/C" do |c|
+            c.add "e", "/E"
         end
         PP.pp(compound_t, "")
     end
 
-    def test_compound_type_invalidated_raises_TypeError_on_field_access
+    def test_compound_type_invalidated_raises_TypeError_on_field_access # rubocop:disable Naming/MethodName
         reg = Typelib::CXXRegistry.new
-        reg.create_compound('/C') { |c| c.add 'field', '/double' }
-        container = reg.create_container('/std/vector', '/C').new
-        container << Hash[:field => 0]
+        reg.create_compound("/C") { |c| c.add "field", "/double" }
+        container = reg.create_container("/std/vector", "/C").new
+        container << Hash[field: 0]
         v = container[0]
         v.invalidate
         assert_raises(TypeError) { v.field }
@@ -794,7 +791,7 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_container_type_invalidation_invalidates_children_if_modified
         reg = Typelib::CXXRegistry.new
-        container = reg.create_container('/std/vector', '/double').new
+        container = reg.create_container("/std/vector", "/double").new
         container << 0
         element = container.raw_get(0)
         container.handle_invalidation do
@@ -806,10 +803,10 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_container_type_does_not_access_already_invalidated_accessors
         reg = Typelib::CXXRegistry.new
-        reg.create_container('/std/vector', '/double')
-        c_of_c = reg.create_container('/std/vector', '/std/vector</double>').new
+        reg.create_container("/std/vector", "/double")
+        c_of_c = reg.create_container("/std/vector", "/std/vector</double>").new
         c_of_c << [0]
-        c  = c_of_c.raw_get(0)
+        c = c_of_c.raw_get(0)
         element = c.raw_get(0)
         c_of_c.handle_invalidation do
             flexmock(c_of_c).should_receive(:contained_memory_id).and_return(0)
@@ -822,10 +819,9 @@ class TC_SpecializedTypes < Minitest::Test
 
     def test_std_string_to_simple_value_returns_the_string
         reg = Typelib::CXXRegistry.new
-        value = Typelib.from_ruby("test string", reg.get('/std/string'))
+        value = Typelib.from_ruby("test string", reg.get("/std/string"))
         # We have to check for the type explicitely
         assert_kind_of String, value.to_simple_value
-        assert_equal 'test string', value.to_simple_value
+        assert_equal "test string", value.to_simple_value
     end
 end
-

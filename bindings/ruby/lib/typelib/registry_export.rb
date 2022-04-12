@@ -1,5 +1,5 @@
-require 'facets/string/snakecase'
-require 'facets/string/camelcase'
+require "facets/string/snakecase"
+require "facets/string/camelcase"
 module Typelib
     module RegistryExport
         class Namespace < Module
@@ -22,7 +22,7 @@ module Typelib
 
             def method_missing(m, *args, &block)
                 if type = resolve_call_from_exported_registry(false, m.to_s, *args)
-                    return type
+                    type
                 else
                     super
                 end
@@ -38,15 +38,15 @@ module Typelib
         attr_reader :__typelib_registry_export_filter_block
 
         def reset_registry_export(registry = self.registry,
-                                  filter_block = @__typelib_registry_export_filter_block,
-                                  typename_prefix = @__typelib_registry_export_typename_prefix)
+            filter_block = @__typelib_registry_export_filter_block,
+            typename_prefix = @__typelib_registry_export_typename_prefix)
             if registry && (self.registry != registry)
-                raise RuntimeError, "setting up #{self} to be an export type from #{registry}, but it is already exporting types from #{self.registry}"
+                raise "setting up #{self} to be an export type from #{registry}, but it is already exporting types from #{self.registry}"
             end
 
             @__typelib_registry_export_filter_block = filter_block
             @__typelib_registry_export_typename_prefix = typename_prefix
-            @__typelib_registry_export_cache = Hash.new
+            @__typelib_registry_export_cache = {}
         end
 
         def initialize_registry_export(mod, name)
@@ -60,7 +60,7 @@ module Typelib
         end
 
         def self.template_args_to_typelib(args)
-            if !args.empty?
+            unless args.empty?
                 args = args.map do |v|
                     if v.respond_to?(:name)
                         v.name
@@ -74,7 +74,8 @@ module Typelib
         def self.each_candidate_name(relaxed_naming, m, *args)
             template_args = template_args_to_typelib(args)
             yield("#{m}#{template_args}")
-            return if !relaxed_naming
+            return unless relaxed_naming
+
             Typelib.warn "possible old-style access on Types, use Types.namespace.of.Type instead of Types::Namespace::Of::Type"
             caller.each do |call|
                 Typelib.warn "  #{call}"
@@ -83,15 +84,12 @@ module Typelib
             yield("#{m.camelcase}#{template_args}")
         end
 
-
         def self.find_namespace(relaxed_naming, typename_prefix, registry, m, *args)
             each_candidate_name(relaxed_naming, m, *args) do |basename|
-                if registry.each("#{typename_prefix}#{basename}/").first
-                    return basename
-                end
+                return basename if registry.each("#{typename_prefix}#{basename}/").first
             end
 
-            return if !relaxed_naming
+            return unless relaxed_naming
 
             # Try harder ... for weird naming conventions ... but that's costly
             prefix = Typelib.split_typename(typename_prefix)
@@ -100,9 +98,7 @@ module Typelib
             registry.each(typename_prefix) do |type|
                 name = type.split_typename
                 next if name[0, prefix.size] != prefix
-                if name[prefix.size].snakecase == basename
-                    return name[prefix.size]
-                end
+                return name[prefix.size] if name[prefix.size].snakecase == basename
             end
             nil
         end
@@ -114,7 +110,7 @@ module Typelib
                 end
             end
 
-            return if !relaxed_naming
+            return unless relaxed_naming
 
             # Try harder ... for weird naming conventions ... but that's costly
             template_args = template_args_to_typelib(args)
@@ -128,7 +124,7 @@ module Typelib
             nil
         end
 
-        def RegistryExportDelegate(ruby_class)
+        def RegistryExportDelegate(ruby_class) # rubocop:disable Naming/MethodName
             klass = DelegateClass(ruby_class.singleton_class).new(ruby_class)
             m = Module.new do
                 include RegistryExport
@@ -155,9 +151,9 @@ module Typelib
         end
 
         def resolve_call_from_exported_registry(relaxed_naming, m, *args)
-            @__typelib_registry_export_cache ||= Hash.new
+            @__typelib_registry_export_cache ||= {}
             if type = @__typelib_registry_export_cache[[m, args]]
-                return type
+                type
             elsif type = RegistryExport.find_type(relaxed_naming, @__typelib_registry_export_typename_prefix, registry, m, *args)
                 exported_type =
                     if type.convertion_to_ruby
@@ -169,8 +165,9 @@ module Typelib
                 if filter_block = @__typelib_registry_export_filter_block
                     filtered_type = filter_block.call(type, exported_type)
                     if filtered_type.respond_to?(:registry) && filtered_type.registry != registry
-                        raise RuntimeError, "filter block #{filter_block} returned #{filtered_type} which is a type from #{filtered_type.registry} but I was expecting #{registry}"
+                        raise "filter block #{filter_block} returned #{filtered_type} which is a type from #{filtered_type.registry} but I was expecting #{registry}"
                     end
+
                     if filtered_type != exported_type
                         exported_type =
                             if filtered_type.respond_to?(:convertion_to_ruby) && filtered_type.convertion_to_ruby
@@ -189,7 +186,7 @@ module Typelib
 
         def method_missing(m, *args, &block)
             if type = resolve_call_from_exported_registry(false, m.to_s, *args)
-                return type
+                type
             else
                 super
             end
@@ -197,11 +194,10 @@ module Typelib
 
         def const_missing(name)
             if type = resolve_call_from_exported_registry(true, name.to_s)
-                return type
+                type
             else
                 raise NotFound, "cannot find a type named #{@__typelib_registry_export_typename_prefix}#{name}, or a type named like that after a CamelCase or snake_case conversion, in registry"
             end
         end
     end
 end
-

@@ -4,7 +4,7 @@ module Typelib
         # The set of paths describing the required fields
         attr_reader :paths
 
-        def initialize(paths = Array.new)
+        def initialize(paths = [])
             @paths = paths
         end
 
@@ -23,9 +23,7 @@ module Typelib
             result = []
 
             # First, check if type_model itself is wanted
-            if yield(type_model)
-                result << Path.new([])
-            end
+            result << Path.new([]) if yield(type_model)
 
             if type_model <= Typelib::CompoundType
                 type_model.each_field do |field_name, field_type|
@@ -66,4 +64,3 @@ module Typelib
         include Enumerable
     end
 end
-

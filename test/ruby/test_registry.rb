@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 class TC_Registry < Minitest::Test
     Registry = Typelib::Registry
@@ -7,7 +7,7 @@ class TC_Registry < Minitest::Test
     attr_reader :reg
     def setup
         @reg = Typelib::Registry.new
-        reg.create_numeric '/int32_t', 4, :sint
+        reg.create_numeric "/int32_t", 4, :sint
     end
 
     def test_aliasing
@@ -39,27 +39,27 @@ class TC_Registry < Minitest::Test
     def test_import_include_option
         registry = Registry.new
         testfile = File.join(SRCDIR, "test_cimport.h")
-        registry.import(testfile, nil, :include => [ File.join(SRCDIR, '..') ], :define => [ 'GOOD' ])
+        registry.import(testfile, nil, include: [File.join(SRCDIR, "..")], define: ["GOOD"])
     end
 
     def test_import_raw_option
         registry = Registry.new
         testfile = File.join(SRCDIR, "test_cimport.h")
-        registry.import(testfile, nil, :rawflags => [ "-I#{File.join(SRCDIR, '..')}", "-DGOOD" ])
+        registry.import(testfile, nil, rawflags: ["-I#{File.join(SRCDIR, '..')}", "-DGOOD"])
     end
 
     def test_import_merge
         registry = Registry.new
         testfile = File.join(SRCDIR, "test_cimport.h")
-        registry.import(testfile, nil, :rawflags => [ "-I#{File.join(SRCDIR, '..')}", "-DGOOD" ])
-        registry.import(testfile, nil, :merge => true, :rawflags => [ "-I#{File.join(SRCDIR, '..')}", "-DGOOD" ])
+        registry.import(testfile, nil, rawflags: ["-I#{File.join(SRCDIR, '..')}", "-DGOOD"])
+        registry.import(testfile, nil, merge: true, rawflags: ["-I#{File.join(SRCDIR, '..')}", "-DGOOD"])
     end
 
     def make_registry
         registry = Typelib::Registry.new
         testfile = File.join(SRCDIR, "test_cimport.1")
-        assert_raises(RuntimeError) { registry.import( testfile  ) }
-        registry.import( testfile, "c" )
+        assert_raises(RuntimeError) { registry.import(testfile) }
+        registry.import(testfile, "c")
 
         registry
     end
@@ -67,10 +67,10 @@ class TC_Registry < Minitest::Test
     def test_resize
         reg = make_registry
 
-        container = reg.get('std/vector</double>')
+        container = reg.get("std/vector</double>")
 
-        test_type = reg.get('StdCollections')
-        old_size   = test_type.size
+        test_type = reg.get("StdCollections")
+        old_size = test_type.size
         old_layout = test_type.enum_for(:get_fields).to_a.dup
 
         refute_equal(old_size, 64)
@@ -90,11 +90,11 @@ class TC_Registry < Minitest::Test
         assert(values.include?(reg.get("/int32_t")))
         assert(values.include?(reg.get("/EContainer")))
 
-        values = reg.each(:with_aliases => true).to_a
+        values = reg.each(with_aliases: true).to_a
         refute_equal(0, values.size)
         assert(values.include?(["/EContainer", reg.get("/EContainer")]))
 
-        values = reg.each('/NS1').to_a
+        values = reg.each("/NS1").to_a
         assert_equal(6, values.size, values.map(&:name))
     end
 
@@ -114,8 +114,8 @@ class TC_Registry < Minitest::Test
 
     def test_create_numeric_sint
         reg = make_registry
-        t = reg.create_numeric('/NewSInt', 2, :sint)
-        assert_equal '/NewSInt', t.name
+        t = reg.create_numeric("/NewSInt", 2, :sint)
+        assert_equal "/NewSInt", t.name
         assert_equal 2, t.size
         assert t.integer?
         assert !t.unsigned?
@@ -123,8 +123,8 @@ class TC_Registry < Minitest::Test
 
     def test_create_numeric_uint
         reg = make_registry
-        t = reg.create_numeric('/NewUInt', 3, :uint)
-        assert_equal '/NewUInt', t.name
+        t = reg.create_numeric("/NewUInt", 3, :uint)
+        assert_equal "/NewUInt", t.name
         assert_equal 3, t.size
         assert t.integer?
         assert t.unsigned?
@@ -132,145 +132,143 @@ class TC_Registry < Minitest::Test
 
     def test_create_numeric_float
         reg = make_registry
-        t = reg.create_numeric('/NewFloat', 4, :float)
-        assert_equal '/NewFloat', t.name
+        t = reg.create_numeric("/NewFloat", 4, :float)
+        assert_equal "/NewFloat", t.name
         assert_equal 4, t.size
         assert !t.integer?
     end
 
     def test_create_enum
         reg = make_registry
-        t = reg.create_enum('/NewEnum') do |enum_t|
+        t = reg.create_enum("/NewEnum") do |enum_t|
             enum_t.VAL0
             enum_t.VAL1 = -1
             enum_t.VAL2
         end
 
-        assert_equal({'VAL0' => 0, 'VAL1' => -1, 'VAL2' => 0}, t.keys)
+        assert_equal({ "VAL0" => 0, "VAL1" => -1, "VAL2" => 0 }, t.keys)
 
         assert_raises(ArgumentError) do
-            reg.create_enum('NewEnum') { |enum_t| enum_t.VAL0 }
+            reg.create_enum("NewEnum") { |enum_t| enum_t.VAL0 }
         end
         assert_raises(ArgumentError) do
-            reg.create_enum('/NewEnum') { |enum_t| }
+            reg.create_enum("/NewEnum") { |enum_t| }
         end
     end
 
     def test_create_container
-        vector_t = reg.create_container('/std/vector', '/int32_t')
+        vector_t = reg.create_container("/std/vector", "/int32_t")
         assert(vector_t <= Typelib::ContainerType)
-        assert_same(reg.get('int32_t'), vector_t.deference)
+        assert_same(reg.get("int32_t"), vector_t.deference)
 
         e = assert_raises(Typelib::NotFound) do
-            reg.create_container('/this_is_an_unknown_container', '/int32_t')
+            reg.create_container("/this_is_an_unknown_container", "/int32_t")
         end
         assert_equal "/this_is_an_unknown_container is not a known container type", e.message
 
         e = assert_raises(Typelib::NotFound) do
-            reg.create_container('/std/vector', '/this_is_an_unknown_type')
+            reg.create_container("/std/vector", "/this_is_an_unknown_type")
         end
         assert_equal "cannot find /this_is_an_unknown_type in registry", e.message
     end
 
     def test_create_array
-        array_t = reg.create_array('/int32_t', 20043)
+        array_t = reg.create_array("/int32_t", 20_043)
         assert(array_t <= Typelib::ArrayType)
-        assert_equal(array_t.length, 20043)
-        assert_same(reg.get('int32_t'), array_t.deference)
+        assert_equal(array_t.length, 20_043)
+        assert_same(reg.get("int32_t"), array_t.deference)
 
         assert_raises(Typelib::NotFound) do
-            reg.create_array('/this_is_an_unknown_type', 10000)
+            reg.create_array("/this_is_an_unknown_type", 10_000)
         end
     end
 
     def test_create_compound
-        reg.create_numeric '/double', 8, :float
+        reg.create_numeric "/double", 8, :float
         assert_raises(ArgumentError) do
-            reg.create_compound('NewCompound') { |t| t.field0 = '/int32_t' }
+            reg.create_compound("NewCompound") { |t| t.field0 = "/int32_t" }
         end
         e = assert_raises(Typelib::NotFound) do
-            reg.create_compound('/NewCompound') { |t| t.field0 = '/this_is_an_unknown_type' }
+            reg.create_compound("/NewCompound") { |t| t.field0 = "/this_is_an_unknown_type" }
         end
         assert_equal "cannot find /this_is_an_unknown_type in registry", e.message
-        type = reg.create_compound('/NewCompound') do |t|
-            t.field0 = '/int32_t'
-            t.add('field1', '/double', 10)
-            t.field2 = '/double[29459]'
+        type = reg.create_compound("/NewCompound") do |t|
+            t.field0 = "/int32_t"
+            t.add("field1", "/double", 10)
+            t.field2 = "/double[29459]"
         end
         assert(type <= Typelib::CompoundType)
-        assert_same(reg.get('/int32_t'), type['field0'])
-        assert_equal(0, type.offset_of('field0'))
-        assert_same(reg.get('/double'), type['field1'])
-        assert_equal(10, type.offset_of('field1'))
-        assert_same(reg.get('/double[29459]'), type['field2'])
-        assert_equal(10 + type['field1'].size, type.offset_of('field2'))
+        assert_same(reg.get("/int32_t"), type["field0"])
+        assert_equal(0, type.offset_of("field0"))
+        assert_same(reg.get("/double"), type["field1"])
+        assert_equal(10, type.offset_of("field1"))
+        assert_same(reg.get("/double[29459]"), type["field2"])
+        assert_equal(10 + type["field1"].size, type.offset_of("field2"))
     end
 
     def test_merge_keeps_metadata
         reg = Typelib::Registry.new
         Typelib::Registry.add_standard_cxx_types(reg)
-        type = reg.create_compound '/Test' do |c|
-            c.add 'field', 'double'
+        type = reg.create_compound "/Test" do |c|
+            c.add "field", "double"
         end
-        type.metadata.set('k', 'v')
-        type.field_metadata['field'].set('k', 'v')
+        type.metadata.set("k", "v")
+        type.field_metadata["field"].set("k", "v")
         new_reg = Typelib::Registry.new
         new_reg.merge(reg)
-        new_type = new_reg.get('/Test')
-        assert_equal [['k', ['v']]], new_type.metadata.each.to_a
-        assert_equal [['k', ['v']]], new_type.field_metadata['field'].each.to_a
+        new_type = new_reg.get("/Test")
+        assert_equal [["k", ["v"]]], new_type.metadata.each.to_a
+        assert_equal [["k", ["v"]]], new_type.field_metadata["field"].each.to_a
     end
 
     def test_minimal_keeps_metadata
         reg = Typelib::Registry.new
         Typelib::Registry.add_standard_cxx_types(reg)
-        type = reg.create_compound '/Test' do |c|
-            c.add 'field', 'double'
+        type = reg.create_compound "/Test" do |c|
+            c.add "field", "double"
         end
-        type.metadata.set('k', 'v')
-        type.field_metadata['field'].set('k', 'v')
-        new_reg = reg.minimal('/Test')
-        new_type = new_reg.get('/Test')
-        assert_equal [['k', ['v']]], new_type.metadata.each.to_a
-        assert_equal [['k', ['v']]], new_type.field_metadata['field'].each.to_a
+        type.metadata.set("k", "v")
+        type.field_metadata["field"].set("k", "v")
+        new_reg = reg.minimal("/Test")
+        new_type = new_reg.get("/Test")
+        assert_equal [["k", ["v"]]], new_type.metadata.each.to_a
+        assert_equal [["k", ["v"]]], new_type.field_metadata["field"].each.to_a
     end
 
-    def test_create_opaque_raises_ArgumentError_if_the_name_is_already_used
+    def test_create_opaque_raises_ArgumentError_if_the_name_is_already_used # rubocop:disable Naming/MethodName
         reg = Typelib::Registry.new
-        reg.create_opaque '/Test', 10
-        assert_raises(ArgumentError) { reg.create_opaque '/Test', 10 }
+        reg.create_opaque "/Test", 10
+        assert_raises(ArgumentError) { reg.create_opaque "/Test", 10 }
     end
 
-    def test_create_null_raises_ArgumentError_if_the_name_is_already_used
+    def test_create_null_raises_ArgumentError_if_the_name_is_already_used # rubocop:disable Naming/MethodName
         reg = Typelib::Registry.new
-        reg.create_null '/Test'
-        assert_raises(ArgumentError) { reg.create_null '/Test' }
+        reg.create_null "/Test"
+        assert_raises(ArgumentError) { reg.create_null "/Test" }
     end
 
     def test_reverse_depends_resolves_recursively
         reg = Typelib::Registry.new
         Typelib::Registry.add_standard_cxx_types(reg)
-        compound_t = reg.create_compound '/C' do |c|
-            c.add 'field', 'double'
+        compound_t = reg.create_compound "/C" do |c|
+            c.add "field", "double"
         end
-        vector_t = reg.create_container '/std/vector', compound_t
+        vector_t = reg.create_container "/std/vector", compound_t
         array_t  = reg.create_array vector_t, 10
         assert_equal [compound_t, array_t, vector_t].to_set,
-            reg.reverse_depends(compound_t).to_set
+                     reg.reverse_depends(compound_t).to_set
     end
 
     def test_remove_removes_the_types_and_its_dependencies
         reg = Typelib::Registry.new
         Typelib::Registry.add_standard_cxx_types(reg)
-        compound_t = reg.create_compound '/C' do |c|
-            c.add 'field', 'double'
+        compound_t = reg.create_compound "/C" do |c|
+            c.add "field", "double"
         end
-        vector_t = reg.create_container '/std/vector', compound_t
+        vector_t = reg.create_container "/std/vector", compound_t
         reg.create_array vector_t, 10
         reg.remove(compound_t)
         assert !reg.include?("/std/vector</C>")
         assert !reg.include?("/std/vector</C>[10]")
     end
 end
-
-

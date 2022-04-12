@@ -1,4 +1,4 @@
-require 'typelib/test'
+require "typelib/test"
 
 describe Typelib::ContainerType do
     attr_reader :registry
@@ -6,26 +6,26 @@ describe Typelib::ContainerType do
         @registry = Typelib::CXXRegistry.new
     end
 
-    let(:element_t) { registry.get('/int32_t') }
-    let(:value_t) { registry.create_container '/std/vector', element_t }
+    let(:element_t) { registry.get("/int32_t") }
+    let(:value_t) { registry.create_container "/std/vector", element_t }
 
     describe "the type model" do
         describe "#to_h" do
             attr_reader :container_t, :element_t
             before do
-                @container_t = registry.create_container '/std/vector', '/int32_t'
+                @container_t = registry.create_container "/std/vector", "/int32_t"
                 @element_t = container_t.deference
             end
 
             it "should be able to describe the type" do
-                expected = Hash[class: 'Typelib::ContainerType',
+                expected = Hash[class: "Typelib::ContainerType",
                                 name: container_t.name,
                                 element: element_t.to_h_minimal(layout_info: false)]
                 assert_equal expected, container_t.to_h(layout_info: false, recursive: false)
             end
 
             it "should describe the sub-type fully if recursive is true" do
-                expected = Hash[class: 'Typelib::ContainerType',
+                expected = Hash[class: "Typelib::ContainerType",
                                 name: container_t.name,
                                 element: element_t.to_h(layout_info: false)]
                 assert_equal expected, container_t.to_h(layout_info: false, recursive: true)
@@ -60,7 +60,7 @@ describe Typelib::ContainerType do
     describe "#to_simple_value" do
         attr_reader :ruby_value, :value
         before do
-            value_t = registry.create_container '/std/vector', '/int32_t'
+            value_t = registry.create_container "/std/vector", "/int32_t"
             @ruby_value = (1..10).to_a
             @value = Typelib.from_ruby(ruby_value, value_t)
         end
@@ -78,7 +78,7 @@ describe Typelib::ContainerType do
     describe ".of_size" do
         attr_reader :container_t, :ruby_value, :value
         before do
-            @container_t = registry.create_container '/std/vector', '/int32_t'
+            @container_t = registry.create_container "/std/vector", "/int32_t"
             @ruby_value = 42
             @value = Typelib.from_ruby(ruby_value, container_t.deference)
         end
@@ -94,10 +94,9 @@ describe Typelib::ContainerType do
     end
 
     it "does not leak on resize" do
-        pid = Process.spawn(File.join(__dir__, 'container_memory_leak_on_resize.rb'))
+        pid = Process.spawn(File.join(__dir__, "container_memory_leak_on_resize.rb"))
         _, status = Process.waitpid2(pid)
         assert status.success?, "the test script crashed, probably due "\
             "to exceeding the 500MB memory limit. Are we leaking again ?"
     end
 end
-

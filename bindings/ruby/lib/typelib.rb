@@ -1,29 +1,24 @@
-require 'enumerator'
-require 'utilrb/object/address'
-require 'utilrb/logger'
-require 'utilrb/kernel/options'
-require 'utilrb/module/attr_predicate'
-require 'utilrb/module/const_defined_here_p'
-require 'delegate'
-require 'pp'
-require 'facets/string/camelcase'
-require 'set'
-require 'base64'
-require 'backports/2.4.0/true_class/dup'
-require 'backports/2.4.0/false_class/dup'
-require 'backports/2.4.0/fixnum/dup'
-require 'backports/2.4.0/float/dup'
-require 'backports/2.4.0/nil_class/dup'
+# frozen_string_literal: true
 
-if !defined?(Infinity)
-    Infinity = Float::INFINITY
-end
-if !defined?(Inf)
-    Inf = Float::INFINITY
-end
-if !defined?(NaN)
-    NaN = Float::NAN
-end
+require "utilrb/object/address"
+require "utilrb/logger"
+require "utilrb/kernel/options"
+require "utilrb/module/attr_predicate"
+require "utilrb/module/const_defined_here_p"
+require "delegate"
+require "pp"
+require "facets/string/camelcase"
+require "set"
+require "base64"
+require "backports/2.4.0/true_class/dup"
+require "backports/2.4.0/false_class/dup"
+require "backports/2.4.0/fixnum/dup"
+require "backports/2.4.0/float/dup"
+require "backports/2.4.0/nil_class/dup"
+
+Infinity = Float::INFINITY unless defined?(Infinity)
+Inf = Float::INFINITY unless defined?(Inf)
+NaN = Float::NAN unless defined?(NaN)
 
 # Typelib is the main module for Ruby-side Typelib functionality.
 #
@@ -66,9 +61,9 @@ end
 # Typelib.specialize_model and Typelib.specialize
 #
 module Typelib
-    extend Logger::Root('Typelib', Logger::WARN)
+    extend Logger::Root("Typelib", Logger::WARN)
 
-    TYPELIB_LIB_DIR = File.expand_path('typelib', File.dirname(__FILE__))
+    TYPELIB_LIB_DIR = File.expand_path("typelib", File.dirname(__FILE__))
 
     class << self
         # If true (the default), typelib will load its type plugins. Otherwise,
@@ -78,7 +73,7 @@ module Typelib
     @load_type_plugins = true
 
     # The namespace separator character used by Typelib
-    NAMESPACE_SEPARATOR = '/'
+    NAMESPACE_SEPARATOR = "/"
 
     # Returns the basename part of +name+, i.e. the type name
     # without the namespace part.
@@ -96,11 +91,11 @@ module Typelib
     # given, the namespace components are separated by it, otherwise,
     # the default of Typelib::NAMESPACE_SEPARATOR is used. If nil is
     # used as new separator, no change is made either.
-    def self.namespace(name, separator = Typelib::NAMESPACE_SEPARATOR, remove_leading = false)
+    def self.namespace(
+        name, separator = Typelib::NAMESPACE_SEPARATOR, remove_leading = false
+    )
         ns = do_namespace(name)
-        if remove_leading
-            ns = ns[1..-1]
-        end
+        ns = ns[1..-1] if remove_leading
         if separator && separator != Typelib::NAMESPACE_SEPARATOR
             ns.gsub!(Typelib::NAMESPACE_SEPARATOR, separator)
         end
@@ -112,98 +107,108 @@ module Typelib
     end
     @warn_about_helper_method_clashes = true
 
-    def self.filter_methods_that_should_not_be_defined(on, reference_class, names, allowed_overloadings, msg_name, with_raw, &block)
+    def self.filter_methods_that_should_not_be_defined(
+        _on, reference_class, names, allowed_overloadings, msg_name, with_raw
+    )
         names.find_all do |n|
             candidates = [n, "#{n}="]
-            if with_raw
-                candidates.concat(["raw_#{n}", "raw_#{n}="])
-            end
+            candidates.concat(["raw_#{n}", "raw_#{n}="]) if with_raw
             candidates.all? do |method_name|
-                if !reference_class.method_defined?(method_name) || allowed_overloadings.include?(method_name)
+                if !reference_class.method_defined?(method_name) ||
+                   allowed_overloadings.include?(method_name)
                     true
                 elsif warn_about_helper_method_clashes?
                     msg_name ||= "instances of #{reference_class.name}"
-                    Typelib.warn "NOT defining #{candidates.join(", ")} on #{msg_name} as it would overload a necessary method"
+                    Typelib.warn "NOT defining #{candidates.join(', ')} on #{msg_name} "\
+                                 "as it would overload a necessary method"
                     false
                 end
             end
         end
     end
 
-    def self.define_method_if_possible(on, reference_class, name, allowed_overloadings = [], msg_name = nil, &block)
+    def self.define_method_if_possible(
+        on, reference_class, name, allowed_overloadings = [], msg_name = nil, &block
+    )
         if !reference_class.method_defined?(name) || allowed_overloadings.include?(name)
             on.send(:define_method, name, &block)
             true
         elsif warn_about_helper_method_clashes?
             msg_name ||= "instances of #{reference_class.name}"
-            Typelib.warn "NOT defining #{name} on #{msg_name} as it would overload a necessary method"
+            Typelib.warn "NOT defining #{name} on #{msg_name} as it would overload "\
+                         "a necessary method"
             false
         end
     end
 
-    @@loaded_typelib_plugins = false
+    TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING = <<~MSG
+        WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment
+        WARN: variable is deprecated. Just put a file called typelib_plugin.rb into a
+        WARN: subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)
+    MSG
+
+    @loaded_typelib_plugins = false
 
     def self.load_typelib_plugins(force: false)
-        if !force && @@loaded_typelib_plugins
-            return
-        end
+        return if !force && @loaded_typelib_plugins
 
         found_by_gem = Set.new
-        Gem.find_files('*/typelib_plugin.rb').each do |plugin_path|
+        Gem.find_files("*/typelib_plugin.rb").each do |plugin_path|
             found_by_gem << plugin_path
             require plugin_path
         end
 
-        @@loaded_typelib_plugins = true
+        @loaded_typelib_plugins = true
 
-        if !ENV['TYPELIB_RUBY_PLUGIN_PATH'] || (@@typelib_plugin_path == ENV['TYPELIB_RUBY_PLUGIN_PATH'])
+        if !ENV["TYPELIB_RUBY_PLUGIN_PATH"] ||
+           (@typelib_plugin_path == ENV["TYPELIB_RUBY_PLUGIN_PATH"])
             return
         end
 
-        ENV['TYPELIB_RUBY_PLUGIN_PATH'].split(':').each do |dir|
+        ENV["TYPELIB_RUBY_PLUGIN_PATH"].split(":").each do |dir|
             specific_file = File.join(dir, "typelib_plugin.rb")
-            if File.exists?(specific_file)
+            if File.exist?(specific_file)
                 if require(specific_file)
-                    STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                    STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                    STDERR.puts "WARN: offending file: #{specific_file}"
+                    TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING
+                        .split("\n").each { |line| warn line }
+                    warn "WARN: Offending file: #{specific_file}"
                 end
             else
                 warned = false
-                Dir.glob(File.join(dir, '*.rb')) do |file|
-                    if !warned
+                Dir.glob(File.join(dir, "*.rb")).sort.each do |file|
+                    unless warned
                         warned = true
-                        STDERR.puts "WARN: integrating typelib plugin using the TYPELIB_RUBY_PLUGIN_PATH environment variable is deprecated"
-                        STDERR.puts "WARN: just put a file called typelib_plugin.rb into a subfolder from the RUBYLIB (e.g. base/typelib_plugin.rb)"
-                        STDERR.puts "WARN: offending dir: #{dir}"
+                        TYPELIB_RUBY_PLUGIN_PATH_DEPRECATION_WARNING
+                            .split("\n").each { |line| warn line }
+                        warn "WARN: Offending file: #{file}"
                     end
                     require file
                 end
             end
         end
 
-        @@typelib_plugin_path = ENV['TYPELIB_RUBY_PLUGIN_PATH'].dup
+        @typelib_plugin_path = ENV["TYPELIB_RUBY_PLUGIN_PATH"].dup
     end
-    @@typelib_plugin_path = nil
+    @typelib_plugin_path = nil
 end
 
 # Type models
-require 'typelib/type'
-require 'typelib/indirect_type'
-require 'typelib/opaque_type'
-require 'typelib/pointer_type'
-require 'typelib/numeric_type'
-require 'typelib/array_type'
-require 'typelib/compound_type'
-require 'typelib/enum_type'
-require 'typelib/container_type'
-require 'typelib/metadata'
+require "typelib/type"
+require "typelib/indirect_type"
+require "typelib/opaque_type"
+require "typelib/pointer_type"
+require "typelib/numeric_type"
+require "typelib/array_type"
+require "typelib/compound_type"
+require "typelib/enum_type"
+require "typelib/container_type"
+require "typelib/metadata"
 
-require 'typelib/registry'
-require 'typelib/registry_export'
-require 'typelib/cxx_registry'
-require 'typelib/specializations'
-require 'typelib_ruby'
+require "typelib/registry"
+require "typelib/registry_export"
+require "typelib/cxx_registry"
+require "typelib/specializations"
+require "typelib_ruby"
 
 Typelib::Type.instance_variable_set :@metadata, Typelib::MetaData.new
 Typelib::IndirectType.instance_variable_set :@metadata, Typelib::MetaData.new
@@ -215,12 +220,12 @@ Typelib::CompoundType.instance_variable_set :@metadata, Typelib::MetaData.new
 Typelib::EnumType.instance_variable_set :@metadata, Typelib::MetaData.new
 Typelib::ContainerType.instance_variable_set :@metadata, Typelib::MetaData.new
 
-require 'typelib/standard_convertions'
+require "typelib/standard_convertions"
 
-require 'typelib/path'
-require 'typelib/accessor'
+require "typelib/path"
+require "typelib/accessor"
 
-class Class
+class Class # :nodoc:
     def to_ruby(value)
         value
     end
@@ -274,11 +279,13 @@ module Typelib
     class UnknownConversionRequested < ArgumentError
         attr_reader :value, :type
         def initialize(value, type)
-            @value, @type = value, type
+            @value = value
+            @type = type
         end
 
         def pretty_print(pp)
-            pp.text "conversion from #{value} of type #{value.class} to #{type} requested, but there are no known conversion that apply"
+            pp.text "conversion from #{value} of type #{value.class} to #{type} "\
+                    "requested, but there are no known conversion that apply"
         end
     end
 
@@ -296,7 +303,6 @@ module Typelib
         end
     end
 
-
     # Initializes +expected_type+ from +arg+, where +arg+ can either be a value
     # of expected_type, a value that can be casted into a value of
     # expected_type, or a Ruby value that can be converted into a value of
@@ -306,30 +312,28 @@ module Typelib
             arg.apply_changes_from_converted_types
         end
 
-        if arg.kind_of?(expected_type)
-            return arg
-        elsif arg.class < Type && arg.class.casts_to?(expected_type)
+        return arg if arg.kind_of?(expected_type)
+        if arg.class < Type && arg.class.casts_to?(expected_type)
             return arg.cast(expected_type)
-        elsif convertion = expected_type.convertions_from_ruby[arg.class]
+        end
+
+        if (convertion = expected_type.convertions_from_ruby[arg.class])
             converted = convertion.call(arg, expected_type)
         elsif expected_type.respond_to?(:from_ruby)
             converted = expected_type.from_ruby(arg)
+        elsif expected_type < NumericType
+            return arg
+        elsif arg.class.name != expected_type.name
+            raise UnknownConversionRequested.new(arg, expected_type),
+                  "types differ and there are not convertions from one "\
+                  "to the other: #{arg.class.name} <-> #{expected_type.name}"
         else
-            if !(expected_type < NumericType) && !arg.kind_of?(expected_type)
-                if arg.class.name != expected_type.name
-                    raise UnknownConversionRequested.new(arg, expected_type), "types differ and there are not convertions from one to the other: #{arg.class.name} <-> #{expected_type.name}"
-                else
-                    raise ConversionToMismatchedType.new(arg, expected_type), "the types have the same name but different definitions: #{arg.class.name} <-> #{expected_type.name}"
-                end
-            end
-            converted = arg
+            raise ConversionToMismatchedType.new(arg, expected_type),
+                  "the types have the same name but different definitions: "\
+                  "#{arg.class.name} <-> #{expected_type.name}"
         end
-        if !(expected_type < NumericType) && !converted.kind_of?(expected_type)
-            raise RuntimeError, "invalid conversion of #{arg} to #{expected_type.name}"
-        end
-        if !converted.eql?(arg)
-            converted.apply_changes_from_converted_types
-        end
+
+        converted.apply_changes_from_converted_types unless converted.eql?(arg)
         converted
     end
 
@@ -352,15 +356,17 @@ module Typelib
         # Registers some memory allocated by typelib
         def add_allocated_memory(count)
             self.allocated_memory += count
-            if (allocated_memory - last_allocated_memory) > allocated_memory_threshold
-                GC.start
-                @last_allocated_memory = allocated_memory
+            unless (allocated_memory - last_allocated_memory) > allocated_memory_threshold
+                return
             end
+
+            GC.start
+            @last_allocated_memory = allocated_memory
         end
     end
     @allocated_memory = 0
     @last_allocated_memory = 0
-    @allocated_memory_threshold = 50 * 1024 ** 2
+    @allocated_memory_threshold = 50 * 1024**2
 
     # A raw, untyped, memory zone
     class MemoryZone
@@ -370,35 +376,35 @@ module Typelib
     end
 end
 
-require 'typelib/cxx'
+require "typelib/cxx"
 
 # Finally, set guard types on the root classes
 module Typelib
-    class Type
+    class Type # :nodoc:
         initialize_base_class
     end
-    class NumericType
+    class NumericType # :nodoc:
         initialize_base_class
     end
-    class EnumType
+    class EnumType # :nodoc:
         initialize_base_class
     end
-    class CompoundType
+    class CompoundType # :nodoc:
         initialize_base_class
     end
-    class ContainerType
+    class ContainerType # :nodoc:
         initialize_base_class
     end
-    class ArrayType
+    class ArrayType # :nodoc:
         initialize_base_class
     end
-    class IndirectType
+    class IndirectType # :nodoc:
         initialize_base_class
     end
-    class OpaqueType
+    class OpaqueType # :nodoc:
         initialize_base_class
     end
-    class PointerType
+    class PointerType # :nodoc:
         initialize_base_class
     end
 end

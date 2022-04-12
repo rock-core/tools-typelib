@@ -1,16 +1,16 @@
-FILE_DIR=File.expand_path(File.dirname(__FILE__))
-TEST_DIR=File.join(FILE_DIR, '..', '..', '..', 'test')
-$LOAD_PATH.unshift File.join(FILE_DIR, '..', 'ext', '.libs')
-$LOAD_PATH.unshift File.join(FILE_DIR, '..', 'lib')
-require 'benchmark'
-require 'typelib'
+FILE_DIR = File.expand_path(File.dirname(__FILE__))
+TEST_DIR = File.join(FILE_DIR, "..", "..", "..", "test")
+$LOAD_PATH.unshift File.join(FILE_DIR, "..", "ext", ".libs")
+$LOAD_PATH.unshift File.join(FILE_DIR, "..", "lib")
+require "benchmark"
+require "typelib"
 
 include Typelib
 
-COUNT=10_000
+COUNT = 10_000
 Benchmark.bmbm(7) do |x|
     registry = Registry.new
-    registry.import( File.join(TEST_DIR, 'test_cimport.1'), 'c' )
+    registry.import(File.join(TEST_DIR, "test_cimport.1"), "c")
 
     int_t = registry.get("int")
     int = int_t.new
@@ -32,4 +32,3 @@ Benchmark.bmbm(7) do |x|
     array = b.c
     x.report("array iter (#{b.c.size})") { COUNT.times { |i| array.each { |v| } } }
 end
-

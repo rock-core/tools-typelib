@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 module Typelib
+    @zero_all_values = false
+
     class << self
         # Globally sets whether all values created with .new are to be
         # zeroed-out first
@@ -101,7 +105,7 @@ module Typelib
             #   layout information from the type
             #
             # @return [Hash]
-            def to_h(options = Hash.new)
+            def to_h(options = {})
                 to_h_minimal(options)
             end
 
@@ -120,15 +124,13 @@ module Typelib
             #   layout information from the type
             #
             # @return [Hash]
-            def to_h_minimal(options = Hash.new)
+            def to_h_minimal(options = {})
                 result = Hash[name: name, class: superclass.name]
-                if options[:layout_info]
-                    result[:size] = size
-                end
+                result[:size] = size if options[:layout_info]
                 result
             end
         end
-        @convertions_from_ruby = Hash.new
+        @convertions_from_ruby = {}
 
         # True if this type refers to subtype of the given type, or if it a
         # subtype of +type+ itself
@@ -165,7 +167,7 @@ module Typelib
         #   returned
         # @return [Set<Type>]
         def self.recursive_dependencies(set = nil)
-            if !@recursive_dependencies
+            unless @recursive_dependencies
                 @recursive_dependencies = Set.new
                 direct_dependencies.each do |direct_dep|
                     @recursive_dependencies << direct_dep
@@ -174,17 +176,17 @@ module Typelib
                 @recursive_dependencies
             end
 
-            if set then return set.merge(@recursive_dependencies)
-            else return @recursive_dependencies
+            if set then set.merge(@recursive_dependencies)
+            else @recursive_dependencies
             end
         end
 
         # Extends this type class to have values of this type converted by the
         # given block on C++/Ruby bondary
-        def self.convert_to_ruby(to = nil, options = Hash.new, &block)
+        def self.convert_to_ruby(to = nil, options = {}, &block)
             options = Kernel.validate_options options,
-                recursive: true,
-                builtin: false
+                                              recursive: true,
+                                              builtin: false
 
             if !options[:builtin] && !block
                 raise ArgumentError, "not a builtin conversion and no block given"
@@ -218,7 +220,7 @@ module Typelib
                 include m
             end
 
-            @convertions_from_ruby = Hash.new
+            @convertions_from_ruby = {}
             Typelib.convertions_from_ruby.find_all(self).each do |conv|
                 convert_from_ruby(conv.ruby, &conv.block)
             end
@@ -226,9 +228,7 @@ module Typelib
                 convert_to_ruby(conv.ruby, &conv.block)
             end
 
-            if respond_to?(:extend_for_custom_convertions)
-                extend_for_custom_convertions
-            end
+            extend_for_custom_convertions if respond_to?(:extend_for_custom_convertions)
 
             super if defined? super
         end
@@ -246,9 +246,10 @@ module Typelib
         # in the other. Moreover, both values should not be modified in two
         # different threads without proper locking.
         def cast(target_type)
-            if !self.class.casts_to?(target_type)
+            unless self.class.casts_to?(target_type)
                 raise ArgumentError, "cannot cast #{self} to #{target_type}"
             end
+
             do_cast(target_type)
         end
 
@@ -280,8 +281,11 @@ module Typelib
 
         module Invalidate
             def to_memory_ptr; raise TypeError, "invalidated object" end
+
             def to_ruby; raise TypeError, "invalidated object" end
+
             def to_byte_array; raise TypeError, "invalidated object" end
+
             def marshalling_size; raise TypeError, "invalidated object" end
         end
 
@@ -387,10 +391,10 @@ module Typelib
             # Helper class that validates the options given to
             # Type.memory_layout and Type#to_byte_array
             def validate_layout_options(options)
-                Kernel.validate_options options, :accept_opaques => false,
-                    :accept_pointers => false,
-                    :merge_skip_copy => true,
-                    :remove_trailing_skips => true
+                Kernel.validate_options options, accept_opaques: false,
+                                                 accept_pointers: false,
+                                                 merge_skip_copy: true,
+                                                 remove_trailing_skips: true
             end
 
             # Returns a representation of the MemoryLayout for this type.
@@ -417,13 +421,14 @@ module Typelib
             #   because of C/C++ padding rules, structures might contain
             #   trailing bytes that don't contain information. If this option is
             #   true (the default), these bytes are removed from the layout.
-            def memory_layout(options = Hash.new)
+            def memory_layout(options = {})
                 options = validate_layout_options(options)
                 do_memory_layout(
                     options[:accept_pointers],
                     options[:accept_opaques],
                     options[:merge_skip_copy],
-                    options[:remove_trailing_skips])
+                    options[:remove_trailing_skips]
+                )
             end
 
             # Returns the namespace part of the type's name.  If +separator+ is
@@ -464,10 +469,12 @@ module Typelib
             end
 
             def to_s; "#<#{superclass.name}: #{name}>" end
+
             def inspect; to_s end
 
             # are we a null type ?
             def null?; @null end
+
             # True if this type is opaque
             #
             # Values from opaque types cannot be manipulated by Typelib. They
@@ -481,7 +488,7 @@ module Typelib
             # Given a markdown-formatted string, return what should be displayed
             # as text
             def pp_doc(pp, doc)
-                if !doc.empty?
+                unless doc.empty?
                     first_line = true
                     doc = doc.split("\n").map do |line|
                         if first_line
@@ -498,9 +505,7 @@ module Typelib
 
                     first_line = true
                     doc.each do |line|
-                        if !first_line
-                            pp.breakable
-                        end
+                        pp.breakable unless first_line
                         pp.text line
                         first_line = false
                     end
@@ -510,10 +515,8 @@ module Typelib
 
             def pretty_print(pp, with_doc = true) # :nodoc:
                 # Metadata is nil on the "root" models, e.g. CompoundType
-                if with_doc && metadata && (doc = metadata.get('doc').first)
-                    if pp_doc(pp, doc)
-                        pp.breakable
-                    end
+                if with_doc && metadata && (doc = metadata.get("doc").first)
+                    pp.breakable if pp_doc(pp, doc)
                 end
                 pp.text name
             end
@@ -576,7 +579,7 @@ module Typelib
             #   padding bytes at the end of the value should be marshalled or
             #   not.
             # @return [Typelib::Type]
-            def from_buffer(string, options = Hash.new)
+            def from_buffer(string, options = {})
                 new.from_buffer(string, options)
             end
 
@@ -628,9 +631,9 @@ module Typelib
             # name. Otherwise we call Class#<
             def is_a?(typename)
                 if typename.respond_to?(:to_str)
-                    typename.to_str === self.name
+                    typename.to_str === name
                 elsif Regexp === typename
-                    typename === self.name
+                    typename === name
                 else
                     self <= typename
                 end
@@ -648,16 +651,16 @@ module Typelib
             end
 
             def initialize_base_class
-                @__guard_type = Typelib::Registry.new(false).create_null('/Typelib/Type')
-                @type = @__guard_type.
-                    instance_variable_get(:@type)
+                @__guard_type = Typelib::Registry.new(false).create_null("/Typelib/Type")
+                @type = @__guard_type
+                        .instance_variable_get(:@type)
             end
         end
 
         # Reinitializes this value to match marshalled data
         #
         # @param [String] string the buffer with marshalled data
-        def from_buffer(string, options = Hash.new)
+        def from_buffer(string, options = {})
             options = Type.validate_layout_options(options)
             from_buffer_direct(string,
                                options[:accept_pointers],
@@ -706,14 +709,15 @@ module Typelib
         # @option options [Boolean] remove_trailing_skips (true) whether
         #   padding bytes at the end of the value should be marshalled or
         #   not.
-        def to_byte_array(options = Hash.new)
+        def to_byte_array(options = {})
             apply_changes_from_converted_types
             options = Type.validate_layout_options(options)
             do_byte_array(
                 options[:accept_pointers],
                 options[:accept_opaques],
                 options[:merge_skip_copy],
-                options[:remove_trailing_skips])
+                options[:remove_trailing_skips]
+            )
         end
 
         # Method called by typelib for internal initialization.
@@ -740,13 +744,14 @@ module Typelib
             # check basic constraints before trying conversion
             # to Ruby objects
             if Type === other
-                return Typelib.compare(self, other)
+                Typelib.compare(self, other)
             else
                 # +other+ is a Ruby type. Try converting +self+ to ruby and
                 # check for equality in Ruby objects
                 if (ruby_value = Typelib.to_ruby(self)).eql?(self)
                     return false
                 end
+
                 other == ruby_value
             end
         end
@@ -762,7 +767,7 @@ module Typelib
         def to_s # :nodoc:
             if respond_to?(:to_str)
                 to_str
-            elsif ! (ruby_value = to_ruby).eql?(self)
+            elsif !(ruby_value = to_ruby).eql?(self)
                 ruby_value.to_s
             else
                 raw_to_s
@@ -782,7 +787,9 @@ module Typelib
         # @return [MemoryZone]
         def to_memory_ptr; @ptr end
 
-        def is_a?(typename); self.class.is_a?(typename) end
+        def is_a?(typename)
+            self.class.is_a?(typename)
+        end
 
         def inspect
             raw_to_s + ": " + to_simple_value.inspect
@@ -804,7 +811,7 @@ module Typelib
         #   and its endianness.
         #
         # @return [Object]
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             raise NotImplementedError, "there is no way to convert a value of type #{self.class} into a simple ruby value"
         end
 
@@ -816,8 +823,8 @@ module Typelib
         # documentation.
         #
         # (see Type#to_simple_value)
-        def to_json_value(options = Hash.new)
-            to_simple_value(Hash[:special_float_values => :nil].merge(options))
+        def to_json_value(options = {})
+            to_simple_value(Hash[special_float_values: :nil].merge(options))
         end
     end
 end

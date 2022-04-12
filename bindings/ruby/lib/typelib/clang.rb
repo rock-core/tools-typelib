@@ -1,7 +1,6 @@
-require 'set'
-require 'tempfile'
-require 'rbconfig'
-
+require "set"
+require "tempfile"
+require "rbconfig"
 
 module Typelib
     module CLangLoader
@@ -10,23 +9,21 @@ module Typelib
         end
 
         # Imports the given C++ file into the registry using CLANG
-        def self.load(registry, file, kind, include_paths: Array.new, **options)
-            #Checking if the clang importer is installed and can be found on the system
-            if !system("which typelib-clang-tlb-importer > /dev/null 2>&1")
-                raise RuntimeError, "typelib-clang-tlb-importer is not installed in PATH"
+        def self.load(registry, file, kind, include_paths: [], **options)
+            # Checking if the clang importer is installed and can be found on the system
+            unless system("which typelib-clang-tlb-importer > /dev/null 2>&1")
+                raise "typelib-clang-tlb-importer is not installed in PATH"
             end
 
             opaque_registry = Registry.new
             registry.each do |type|
-                if type.opaque?
-                    opaque_registry.merge(registry.minimal(type.name))
-                end
+                opaque_registry.merge(registry.minimal(type.name)) if type.opaque?
             end
 
             include_dirs = options[:include_paths] || []
             include_path = include_dirs.map { |d| "-I#{d}" }
             defines = options[:define] || []
-            #add -D to the defines
+            # add -D to the defines
             defines = defines.map { |d| "-D#{d}" }
 
             # which files actually to operate on
@@ -39,11 +36,11 @@ module Typelib
             # load the informations to use it sduring processing.
             #
             # FIXME: reuse some code for creating a "opaque.tlb"
-            Tempfile.open('tlb-clang-opaques-') do |opaque_registry_io|
+            Tempfile.open("tlb-clang-opaques-") do |opaque_registry_io|
                 opaque_registry_io.write opaque_registry.to_xml
                 opaque_registry_io.flush
 
-                Tempfile.open('tlb-clang-output-') do |clang_output_io|
+                Tempfile.open("tlb-clang-output-") do |clang_output_io|
                     # NOTE: the added 'isystem' flag to point clang (3.4) to its own correct
                     # header path. this is needed on ubuntu 14.04 (debian jessie works
                     # without but does not seem to break). to see whats going wrong
@@ -51,27 +48,27 @@ module Typelib
                     # and read here:
                     #   https://github.com/Valloric/YouCompleteMe/issues/303#issuecomment-17656962
                     command_line =
-                        ['typelib-clang-tlb-importer',
-                        "-silent",
-                        "-opaquePath=#{opaque_registry_io.path}",
-                        "-tlbSavePath=#{clang_output_io.path}",
-                        *header_files,
-                        '--',
-                        *include_path,
-                        "-x",
-                        "c++",
-                        *defines]
+                        ["typelib-clang-tlb-importer",
+                         "-silent",
+                         "-opaquePath=#{opaque_registry_io.path}",
+                         "-tlbSavePath=#{clang_output_io.path}",
+                         *header_files,
+                         "--",
+                         *include_path,
+                         "-x",
+                         "c++",
+                         *defines]
 
                     if macos?
-                        command_line <<  '-resource-dir=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0'
-                        command_line <<  '-stdlib=libc++'
+                        command_line <<  "-resource-dir=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0"
+                        command_line <<  "-stdlib=libc++"
                     else
-                        command_line << '-isystem/usr/bin/../lib/clang/3.4/include'
+                        command_line << "-isystem/usr/bin/../lib/clang/3.4/include"
                     end
 
                     # and finally call importer-tool
-                    if !system(*command_line)
-                        raise RuntimeError, "typelib-clang-tlb-importer failed!"
+                    unless system(*command_line)
+                        raise "typelib-clang-tlb-importer failed!"
                     end
 
                     # read the registry created by the tool back into this ruby process
@@ -86,14 +83,13 @@ module Typelib
             if system("which clang-3.4 > /dev/null 2>&1")
                 return "clang-3.4"
             elsif system("which clang > /dev/null 2>&1")
-                IO.popen(['clang', '--version']) do |clang_io|
+                IO.popen(["clang", "--version"]) do |clang_io|
                     clang_version = clang_io.read
-                    if clang_version.include?('clang version 3.')
-                        return "clang"
-                    end
+                    return "clang" if clang_version.include?("clang version 3.")
                 end
             end
-            raise RuntimeError, "Couldn't find clang 3.x compiler binary!"
+
+            raise "Couldn't find clang 3.x compiler binary!"
         end
 
         # NOTE: preprocessing of a group of header-files by the actual compiler
@@ -112,7 +108,7 @@ module Typelib
             #
             # note that we force the ending of the tempfile to be ".hpp" so that
             # the clang-based tool detects the content as c++ source-code
-            Tempfile.open(['clang_preprocess_', '.hpp']) do |io|
+            Tempfile.open(["clang_preprocess_", ".hpp"]) do |io|
                 files.each do |path|
                     io.puts "#include <#{path}>"
                 end
@@ -121,16 +117,17 @@ module Typelib
                 additional_opts = []
 
                 if macos?
-                    additional_opts = ['-resource-dir=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0',  '-stdlib=libc++']
+                    additional_opts = ["-resource-dir=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0", "-stdlib=libc++"]
                 end
 
-                result = IO.popen([clang_binary_name, *additional_opts ,"-E", *includes, *defines, io.path]) do |clang_io|
+                result = IO.popen([clang_binary_name, *additional_opts, "-E", *includes, *defines, io.path]) do |clang_io|
                     clang_io.read
                 end
 
-                if !$?.success?
+                unless $?.success?
                     raise ArgumentError, "resolve_toplevel_include_mapping(): Failed to preprocess one of #{files.join(", ")}"
                 end
+
                 result
             end
         end

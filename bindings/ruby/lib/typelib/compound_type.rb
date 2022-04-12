@@ -1,47 +1,56 @@
+# frozen_string_literal: true
+
 module Typelib
     # Base class for compound types (structs, unions)
     #
     # See the Typelib module documentation for an overview about how types are
     # values are represented.
     class CompoundType < Type
-
         # Prefix for all instance variables based on the type fields
-        FIELD_NANE_PREFIX = '__typelib_'
+        FIELD_NAME_PREFIX = "__typelib_"
 
         # Module used to extend frozen values
         module Freezer
-            def set(*args)
+            def set(*)
                 raise TypeError, "frozen object"
             end
-            def raw_set(*args)
+
+            def raw_set(*)
                 raise TypeError, "frozen object"
             end
-            def raw_set_field(*args)
+
+            def raw_set_field(*)
                 raise TypeError, "frozen object"
             end
         end
 
         # Module used to extend invalidated values
         module Invalidate
-            def set(*args)
+            def set(*)
                 raise TypeError, "invalidated object"
             end
-            def get(*args)
+
+            def get(*)
                 raise TypeError, "invalidated object"
             end
-            def raw_get(*args)
+
+            def raw_get(*)
                 raise TypeError, "invalidated object"
             end
-            def raw_get_cached(*args)
+
+            def raw_get_cached(*)
                 raise TypeError, "invalidated object"
             end
-            def raw_set(*args)
+
+            def raw_set(*)
                 raise TypeError, "invalidated object"
             end
-            def raw_get_field(*args)
+
+            def raw_get_field(*)
                 raise TypeError, "invalidated object"
             end
-            def raw_set_field(*args)
+
+            def raw_set_field(*)
                 raise TypeError, "invalidated object"
             end
         end
@@ -64,16 +73,12 @@ module Typelib
 
         def freeze_children
             super
-            @fields.each_value do |f|
-                f.freeze
-            end
+            @fields.each_value(&:freeze)
         end
 
         def invalidate_children
             super
-            @fields.each_value do |f|
-                f.invalidate
-            end
+            @fields.each_value(&:invalidate)
             @fields.clear
         end
 
@@ -81,21 +86,17 @@ module Typelib
             def invalidate_changes_from_converted_types
                 super()
                 self.class.converted_fields.each do |field_name|
-                    instance_variable_set("@#{FIELD_NANE_PREFIX}#{field_name}", nil)
-                    if @fields[field_name]
-                        @fields[field_name].invalidate_changes_from_converted_types
-                    end
+                    instance_variable_set("@#{FIELD_NAME_PREFIX}#{field_name}", nil)
+                    @fields[field_name]&.invalidate_changes_from_converted_types
                 end
             end
 
             def apply_changes_from_converted_types
                 super()
                 self.class.converted_fields.each do |field_name|
-                    value = instance_variable_get("@#{FIELD_NANE_PREFIX}#{field_name}")
-                    if !value.nil?
-                        if @fields[field_name]
-                            @fields[field_name].apply_changes_from_converted_types
-                        end
+                    value = instance_variable_get("@#{FIELD_NAME_PREFIX}#{field_name}")
+                    unless value.nil?
+                        @fields[field_name]&.apply_changes_from_converted_types
                         set_field(field_name, value)
                     end
                 end
@@ -103,12 +104,9 @@ module Typelib
 
             def dup
                 new_value = super()
-                for field_name in self.class.converted_fields
-                    converted_value = instance_variable_get("@#{FIELD_NANE_PREFIX}#{field_name}")
-                    if !converted_value.kind_of?(Symbol)
-                        converted_value = converted_value.dup
-                    end
-                    instance_variable_set("@#{FIELD_NANE_PREFIX}#{field_name}", converted_value.dup)
+                self.class.converted_fields.each do |field_name|
+                    ivar = "@#{FIELD_NAME_PREFIX}#{field_name}"
+                    instance_variable_set(ivar, instance_variable_get(ivar).dup)
                 end
                 new_value
             end
@@ -138,47 +136,49 @@ module Typelib
         def typelib_initialize
             super
             # A hash in which we cache Type objects for each of the structure fields
-            @fields = Hash.new
+            @fields = {}
             @field_types = self.class.field_types
         end
 
         def raw_each_field
-            return enum_for(__method__) if !block_given?
+            return enum_for(__method__) unless block_given?
+
             self.class.each_field do |field_name, _|
                 yield(field_name, raw_get(field_name))
             end
         end
 
         def each_field
-            return enum_for(__method__) if !block_given?
+            return enum_for(__method__) unless block_given?
+
             self.class.each_field do |field_name, _|
                 yield(field_name, get(field_name))
             end
         end
 
         @fields = []
-        @field_types = Hash.new
-        @field_metadata = Hash.new
+        @field_types = {}
+        @field_metadata = {}
         class << self
             # Check if this type can be used in place of +typename+
             # In case of compound types, we check that either self, or
             # the first element field is +typename+
             def is_a?(typename)
-                super || (!self.fields.empty? && self.fields[0].last.is_a?(typename))
+                super || (!fields.empty? && fields[0].last.is_a?(typename))
             end
 
             # The set of fields that are converted to a different type when
             # accessed from Ruby, as a set of names
             attr_reader :converted_fields
 
-            @@custom_convertion_modules = Hash.new
+            @@custom_convertion_modules = {}
             def custom_convertion_module(converted_fields)
                 @@custom_convertion_modules[converted_fields] ||=
                     Module.new do
                         include CustomConvertionsHandling
 
                         converted_fields.each do |field_name|
-                            attr_name = "@#{FIELD_NANE_PREFIX}#{field_name}"
+                            attr_name = "@#{FIELD_NAME_PREFIX}#{field_name}"
                             define_method("#{field_name}=") do |value|
                                 instance_variable_set(attr_name, value)
                             end
@@ -215,21 +215,22 @@ module Typelib
             def extend_for_custom_convertions
                 super if defined? super
 
-                if !converted_fields.empty?
+                unless converted_fields.empty?
                     self.contains_converted_types = true
                     # Make it local so that it can be accessed in the module we define below
                     converted_fields = self.converted_fields
                     type_klass = self
 
                     converted_fields = Typelib.filter_methods_that_should_not_be_defined(
-                        self, type_klass, converted_fields, Type::ALLOWED_OVERLOADINGS, nil, false)
+                        self, type_klass, converted_fields, Type::ALLOWED_OVERLOADINGS, nil, false
+                    )
 
                     m = custom_convertion_module(converted_fields)
                     include(m)
                 end
             end
 
-            @@access_method_modules = Hash.new
+            @@access_method_modules = {}
             def access_method_module(full_fields_names, converted_field_names)
                 @@access_method_modules[[full_fields_names, converted_field_names]] ||=
                     Module.new do
@@ -251,13 +252,11 @@ module Typelib
             # the object, and a getter in the singleton class
             # which returns the field type
             def subclass_initialize
-                @field_types = Hash.new
-                @fields = Array.new
-                @field_metadata = Hash.new
+                @field_types = {}
+                @fields = []
+                @field_metadata = {}
                 get_fields.each do |name, offset, type, metadata|
-                    if name.respond_to?(:force_encoding)
-                        name.force_encoding('ASCII')
-                    end
+                    name.force_encoding("ASCII")
                     field_types[name] = type
                     field_types[name.to_sym] = type
                     fields << [name, type]
@@ -284,7 +283,7 @@ module Typelib
 
                 super if defined? super
 
-                if !convertions_from_ruby.has_key?(Hash)
+                unless convertions_from_ruby.key?(Hash)
                     convert_from_ruby Hash do |value, expected_type|
                         result = expected_type.new
                         result.set_hash(value)
@@ -292,7 +291,7 @@ module Typelib
                     end
                 end
 
-                if !convertions_from_ruby.has_key?(Array)
+                unless convertions_from_ruby.key?(Array)
                     convert_from_ruby Array do |value, expected_type|
                         result = expected_type.new
                         result.set_array(value)
@@ -323,22 +322,25 @@ module Typelib
             attr_reader :field_metadata
             # Returns the type of +name+
             def [](name)
-                if result = field_types[name]
+                if (result = field_types[name])
                     result
                 else
                     raise ArgumentError, "#{name} is not a field of #{self.name}"
                 end
             end
+
             # True if the given field is defined
             def has_field?(name)
-                field_types.has_key?(name)
+                field_types.key?(name)
             end
+
             # Iterates on all fields
             #
             # @yield [name,type] the fields of this compound
             # @return [void]
             def each_field
-                return enum_for(__method__) if !block_given?
+                return enum_for(__method__) unless block_given?
+
                 fields.each { |field| yield(*field) }
             end
 
@@ -361,8 +363,8 @@ module Typelib
             #
             # @option (see Type#to_h)
             # @return (see Type#to_h)
-            def to_h(options = Hash.new)
-                fields = Array.new
+            def to_h(options = {})
+                fields = []
                 if options[:recursive]
                     each_field.map do |name, type|
                         fields << Hash[name: name, type: type.to_h(options)]
@@ -382,7 +384,7 @@ module Typelib
             end
 
             def pretty_print_common(pp) # :nodoc:
-                pp.group(2, '{', '}') do
+                pp.group(2, "{", "}") do
                     pp.breakable
                     all_fields = get_fields.to_a
 
@@ -394,12 +396,10 @@ module Typelib
 
             def pretty_print(pp, verbose = false) # :nodoc:
                 super(pp)
-                pp.text ' '
+                pp.text " "
                 pretty_print_common(pp) do |name, offset, type, metadata|
-                    if doc = metadata.get('doc').first
-                        if pp_doc(pp, doc)
-                            pp.breakable
-                        end
+                    if (doc = metadata.get("doc").first)
+                        pp.breakable if pp_doc(pp, doc)
                     end
                     pp.text name
                     if verbose
@@ -410,7 +410,7 @@ module Typelib
                     pp.nest(2) do
                         type.pretty_print(pp, false)
                     end
-                    pp.text '>'
+                    pp.text ">"
                 end
             end
         end
@@ -427,7 +427,7 @@ module Typelib
         # Returns true if +name+ is a valid field name. It can either be given
         # as a string or a symbol
         def has_field?(name)
-            @field_types.has_key?(name)
+            @field_types.key?(name)
         end
 
         def [](name)
@@ -442,7 +442,6 @@ module Typelib
         def raw_get_field(name)
             raw_get(name)
         end
-
 
         def get(name)
             if @fields[name]
@@ -473,12 +472,9 @@ module Typelib
             if value.kind_of?(Type)
                 attribute = raw_get(name)
                 # If +value+ is already a typelib value, just do a plain copy
-                if attribute.kind_of?(Typelib::Type)
-                    return Typelib.copy(attribute, value)
-                end
+                return Typelib.copy(attribute, value) if attribute.kind_of?(Typelib::Type)
             end
             typelib_set_field(name, value)
-
         rescue ArgumentError => e
             if e.message =~ /^no field \w+ in /
                 raise e, (e.message + " in #{name}(#{self.class.name})"), e.backtrace
@@ -499,13 +495,12 @@ module Typelib
         # that the field is a compound type and initialize it using the keys of
         # +value+ as field names
         def set(name, value)
-            if !has_field?(name)
+            unless has_field?(name)
                 raise ArgumentError, "#{self.class.name} has no field called #{name}"
             end
 
             value = Typelib.from_ruby(value, @field_types[name])
             raw_set_field(name.to_s, value)
-
         rescue TypeError => e
             raise e, "#{e.message} for #{self.class.name}.#{name}", e.backtrace
         end
@@ -514,9 +509,9 @@ module Typelib
         #
         # Compound types are returned as a hash from the field name (as a
         # string) to the converted field value.
-        def to_simple_value(options = Hash.new)
+        def to_simple_value(options = {})
             apply_changes_from_converted_types
-            result = Hash.new
+            result = {}
             raw_each_field { |name, v| result[name.to_s] = v.to_simple_value(options) }
             result
         end

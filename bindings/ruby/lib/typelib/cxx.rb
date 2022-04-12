@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'typelib/gccxml'
-require 'typelib/clang'
+require "typelib/gccxml"
+require "typelib/clang"
 
 module Typelib
     module CXX
@@ -13,14 +13,14 @@ module Typelib
             arguments.map! do |arg|
                 arg.join("")
             end
-            return type_name, arguments
+            [type_name, arguments]
         end
 
         def self.collect_template_arguments(tokens)
             level = 0
             arguments = []
             current = []
-            while !tokens.empty?
+            until tokens.empty?
                 case tk = tokens.shift
                 when "<"
                     level += 1
@@ -49,26 +49,22 @@ module Typelib
                     current << tk
                 end
             end
-            if !current.empty?
-                arguments << current
-            end
+            arguments << current unless current.empty?
 
-            return arguments
+            arguments
         end
 
         def self.template_tokenizer(name)
             suffix = name
             result = []
-            while !suffix.empty?
+            until suffix.empty?
                 suffix =~ /^([^<,>]*)/
                 match = $1.strip
-                if !match.empty?
-                    result << match
-                end
-                char   = $'[0, 1]
+                result << match unless match.empty?
+                char = $'[0, 1]
                 suffix = $'[1..-1]
 
-                break if !suffix
+                break unless suffix
 
                 result << char
             end
@@ -76,9 +72,9 @@ module Typelib
         end
 
         CXX_LOADERS = Hash[
-            'gccxml' => GCCXMLLoader,
-            'castxml' => CastXMLLoader,
-            'clang'  => CLangLoader
+            "gccxml" => GCCXMLLoader,
+            "castxml" => CastXMLLoader,
+            "clang" => CLangLoader
         ]
 
         class << self
@@ -99,11 +95,12 @@ module Typelib
         def self.loader
             if instance_variable_defined?(:@loader)
                 @loader
-            elsif cxx_loader_name = ENV['TYPELIB_CXX_LOADER']
+            elsif cxx_loader_name = ENV["TYPELIB_CXX_LOADER"]
                 cxx_loader = CXX_LOADERS[cxx_loader_name]
-                if !cxx_loader
+                unless cxx_loader
                     raise ArgumentError, "#{cxx_loader_name} is not a known C++ loader, known loaders are '#{CXX_LOADERS.keys.sort.join("', '")}'"
                 end
+
                 cxx_loader
             else
                 CastXMLLoader
@@ -113,9 +110,7 @@ module Typelib
         # Loads a C++ file and imports it in the given registry, based on the
         # current C++ importer setting
         def self.load(registry, file, kind, cxx_importer: loader, **options)
-            if cxx_importer.respond_to?(:to_str)
-                cxx_importer = CXX_LOADERS[cxx_importer]
-            end
+            cxx_importer = CXX_LOADERS[cxx_importer] if cxx_importer.respond_to?(:to_str)
             cxx_importer.load(registry, file, kind, **options)
         end
 
@@ -123,7 +118,6 @@ module Typelib
             loader.preprocess(files, kind, **options)
         end
 
-        Registry::TYPE_HANDLERS['c'] = method(:load)
+        Registry.register_type_handler("c", method(:load))
     end
 end
-

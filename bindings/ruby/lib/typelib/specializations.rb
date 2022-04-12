@@ -40,10 +40,10 @@ module Typelib
         attr_reader :container
 
         def initialize(container = nil)
-            @from_typename = Hash.new
-            @from_array_basename = Hash.new
-            @from_container_basename = Hash.new
-            @from_regexp = Hash.new
+            @from_typename = {}
+            @from_array_basename = {}
+            @from_container_basename = {}
+            @from_regexp = {}
             @container = container
         end
 
@@ -55,13 +55,13 @@ module Typelib
             if key.respond_to?(:to_str)
                 suffix = key[-2, 2]
                 if suffix == "<>"
-                    return key[0..-3], from_container_basename
+                    [key[0..-3], from_container_basename]
                 elsif suffix == "[]"
-                    return key[0..-3], from_array_basename
+                    [key[0..-3], from_array_basename]
                 else
-                    return key, from_typename
+                    [key, from_typename]
                 end
-            else return key, from_regexp
+            else [key, from_regexp]
             end
         end
 
@@ -70,10 +70,10 @@ module Typelib
         # @param [Regexp,String] the object that will be used to match the type
         #   name
         # @param [Object] value the value to be stored for that key
-        def set(key, value, options = Hash.new)
-            options = Kernel.validate_options options, :if => lambda { |obj| true }
+        def set(key, value, options = {})
+            options = Kernel.validate_options options, if: lambda { |obj| true }
             key, set = mapping_for_key(key)
-            set = set[key] = (container || Array.new).dup
+            set = set[key] = (container || []).dup
             set << [options, value]
         end
 
@@ -86,11 +86,10 @@ module Typelib
         # @param [Regexp,String] the object that will be used to match the type
         #   name
         # @param [Object] value the value to be added to the set for that key
-        def add(key, value, options = Hash.new)
-            options = Kernel.validate_options options, :if => lambda { |obj| true }
-            if !container
-                raise ArgumentError, "#{self} does not support containers"
-            end
+        def add(key, value, options = {})
+            options = Kernel.validate_options options, if: lambda { |obj| true }
+            raise ArgumentError, "#{self} does not support containers" unless container
+
             key, set = mapping_for_key(key)
             set = (set[key] ||= container.dup)
             set << [options, value]
@@ -113,7 +112,7 @@ module Typelib
         def find_all(type_model, name = type_model.name)
             # We first build a set of candidates, and then filter with the :if
             # block
-            candidates = Array.new
+            candidates = []
             if type_model <= Typelib::ContainerType
                 if set = from_container_basename[type_model.container_kind]
                     candidates.concat(set)
@@ -127,9 +126,7 @@ module Typelib
                 candidates.concat(registered)
             end
             from_regexp.each do |matcher, registered|
-                if matcher === name
-                    candidates.concat(registered)
-                end
+                candidates.concat(registered) if matcher === name
             end
 
             candidates.map do |options, obj|
@@ -139,10 +136,10 @@ module Typelib
     end
 
     # Initialize the specialization-related attributes on the Typelib module
-    @value_specializations = RubyMappingCustomization.new(Array.new)
-    @type_specializations  = RubyMappingCustomization.new(Array.new)
-    @convertions_from_ruby = RubyMappingCustomization.new(Array.new)
-    @convertions_to_ruby   = RubyMappingCustomization.new(Array.new)
+    @value_specializations = RubyMappingCustomization.new([])
+    @type_specializations  = RubyMappingCustomization.new([])
+    @convertions_from_ruby = RubyMappingCustomization.new([])
+    @convertions_to_ruby   = RubyMappingCustomization.new([])
 
     # Internal proxy class that is used to offer a nice way to get hold on types
     # in #specialize blocks.
@@ -189,7 +186,7 @@ module Typelib
             end
 
             def method_missing(*mcall, &block)
-                if !@type
+                unless @type
                     base_type = @specialization_module.instance_variable_get(:@base_type)
                     if base_type
                         @type = @ops.inject(base_type) do |type, m|
@@ -223,8 +220,8 @@ module Typelib
     #
     # See Typelib.specialize to add instance methods to the values of a given
     # Typelib type
-    def self.specialize_model(name, options = Hash.new, &block)
-        options = Kernel.validate_options options, :if => lambda { |t| true }
+    def self.specialize_model(name, options = {}, &block)
+        options = Kernel.validate_options options, if: lambda { |t| true }
         type_specializations.add(name, Module.new(&block), options)
     end
 
@@ -252,8 +249,8 @@ module Typelib
     #   end
     #
     # will make it possible to add two values of the Vector3 type in Ruby
-    def self.specialize(name, options = Hash.new, &block)
-        options = Kernel.validate_options options, :if => lambda { |t| true }
+    def self.specialize(name, options = {}, &block)
+        options = Kernel.validate_options options, if: lambda { |t| true }
         value_specializations.add(name, TypeSpecializationModule.new(&block), options)
     end
 
@@ -274,7 +271,9 @@ module Typelib
         attr_reader :block
 
         def initialize(typelib, ruby, block)
-            @typelib, @ruby, @block = typelib, ruby, block
+            @typelib = typelib
+            @ruby = ruby
+            @block = block
         end
     end
 
@@ -303,14 +302,16 @@ module Typelib
     #   Typelib.convert_to_ruby '/timeval', Time do |value|
     #     Time.at(value.seconds, value.microseconds)
     #   end
-    def self.convert_to_ruby(typename, ruby_class = nil, options = Hash.new, &block)
+    def self.convert_to_ruby(typename, ruby_class = nil, options = {}, &block)
         if ruby_class.kind_of?(Hash)
-            ruby_class, options = nil, options
+            ruby_class = nil
+            options = options
         end
 
         if ruby_class && !ruby_class.kind_of?(Class)
             raise ArgumentError, "expected a class as second argument, got #{to}"
         end
+
         convertions_to_ruby.add(typename, Convertion.new(typename, ruby_class, lambda(&block)), options)
     end
 
@@ -339,12 +340,12 @@ module Typelib
     #     timeval time;
     #   };
     #
-    def self.convert_from_ruby(ruby_class, typename, options = Hash.new, &block)
-        options = Kernel.validate_options options, :if => lambda { |t| true }
-        if !ruby_class.kind_of?(Class)
+    def self.convert_from_ruby(ruby_class, typename, options = {}, &block)
+        options = Kernel.validate_options options, if: lambda { |t| true }
+        unless ruby_class.kind_of?(Class)
             raise ArgumentError, "expected a class as first argument, got #{ruby_class}"
         end
+
         convertions_from_ruby.add(typename, Convertion.new(typename, ruby_class, lambda(&block)), options)
     end
 end
-
