@@ -36,5 +36,7 @@
   <export>
     <cpp cflags="-I${prefix}/install/include" lflags="-L${prefix}/install/lib -ltypeLib -Wl,-rpath,-L${prefix}/lib"/>
   </export>
+
+  <test_depend name="rubocop" />
 </package>
 
