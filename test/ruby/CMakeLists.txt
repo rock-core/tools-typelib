@@ -43,3 +43,9 @@ set_property(TEST RubyLocalPlugins APPEND PROPERTY ENVIRONMENT
 # wanna test
 set_property(TEST RubyLocalPlugins APPEND PROPERTY ENVIRONMENT
     "TYPELIB_RUBY_PLUGIN_PATH=")
+
+add_test(
+    NAME rubocop
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMAND rubocop
+)
