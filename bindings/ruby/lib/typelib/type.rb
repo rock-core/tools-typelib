@@ -805,7 +805,7 @@ module Typelib
         #   represent them.
         # @option options [Boolean] :pack_simple_arrays (true) if true, arrays
         #   and containers of numeric types will be packed into a hash of the form
-        #   {size: size_in_elements, pack_code: code, data: packed_data}. The
+        #   \{ size: size_in_elements, pack_code: code, data: packed_data }. The
         #   pack_code field describes the type of element in the array (from
         #   String#unpack or Array#pack), which tells both the type of the data
         #   and its endianness.

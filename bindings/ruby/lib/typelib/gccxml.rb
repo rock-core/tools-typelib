@@ -152,7 +152,7 @@ module Typelib
 
         # @return [{String=>String}] mapping from a type ID to the message
         #   explaining why it cannot be represented (it is "ignored")
-        # @see {ignore}
+        # @see #ignore
         attr_reader :ignore_message
 
         # The registry that is being filled by parsing GCCXML output
