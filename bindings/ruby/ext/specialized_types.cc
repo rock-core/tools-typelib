@@ -12,6 +12,10 @@ using namespace typelib_ruby;
  * Typelib::Compound
  */
 
+/* Return the list of fields for this compound
+ *
+ * @return [Array<(String,Numeric,Class<Type>,Metadata)>]
+ */
 static VALUE compound_get_fields(VALUE self)
 {
     if (self == cCompound)

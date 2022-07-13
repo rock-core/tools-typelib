@@ -35,7 +35,7 @@ module Typelib
         # @return [{Regexp=>Object}]
         attr_reader :from_regexp
         # A stereotypical container that should be used as base object in
-        # {from_regexp} and {from_type}. If nil, only one object can be
+        # {#from_regexp} and {#from_typename}. If nil, only one object can be
         # registered at the time
         attr_reader :container
 

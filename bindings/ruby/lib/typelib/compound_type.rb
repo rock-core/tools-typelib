@@ -384,14 +384,22 @@ module Typelib
             end
 
             def pretty_print_common(pp) # :nodoc:
-                pp.group(2, "{", "}") do
-                    pp.breakable
-                    all_fields = get_fields.to_a
+                all_fields = get_fields.to_a
+                if all_fields.empty?
+                    pp.text "{ }"
+                    return
+                end
 
+                pp.text "{"
+                pp.nest(2) do
+                    pp.breakable
                     pp.seplist(all_fields) do |field|
                         yield(*field)
                     end
                 end
+
+                pp.breakable
+                pp.text "}"
             end
 
             def pretty_print(pp, verbose = false) # :nodoc:
