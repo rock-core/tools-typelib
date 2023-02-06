@@ -8,7 +8,6 @@
   </numeric>
   <container  name="/std/string" of="/int8_t" size="32" kind="/std/string" >
   <metadata key="cxxname"><![CDATA[::std::string]]></metadata>
-  <metadata key="doc"><![CDATA[A string of @c char]]></metadata>
 
   </container>
   <compound name="/strings/C3" size="12" >
