@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Typelib
-    @zero_all_values = false
+    @zero_all_values = (ENV["TYPELIB_ZERO_ALL_VALUES"] == "1")
 
     class << self
         # Globally sets whether all values created with .new are to be
