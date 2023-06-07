@@ -139,4 +139,25 @@ class TC_Type < Minitest::Test
         assert_equal 10, unmarshalled.a
         assert_in_delta 20, unmarshalled.b, 0.001
     end
+
+    def test_inspect_shows_to_simple_value
+        reg = Typelib::CXXRegistry.new
+        type = reg.create_compound "/Source" do |c|
+            c.add "a", "/int32_t", 0
+            c.add "b", "/double", 10
+        end
+        value = type.new(a: 10, b: 20)
+        assert_equal "#{value}: {\"a\"=>10, \"b\"=>20.0}", value.inspect
+    end
+
+    def test_inspect_does_not_fail_if_to_simple_value_does
+        reg = Typelib::CXXRegistry.new
+        type = reg.create_compound "/Source" do |c|
+            c.add "a", "/int32_t", 0
+            c.add "b", "/double", 10
+        end
+        value = type.new(a: 10, b: 20)
+        flexmock(value).should_receive(:to_simple_value).and_raise(RuntimeError)
+        assert_equal value.to_s, value.inspect
+    end
 end
