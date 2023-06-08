@@ -792,7 +792,14 @@ module Typelib
         end
 
         def inspect
-            raw_to_s + ": " + to_simple_value.inspect
+            value =
+                begin
+                    ": " + to_simple_value.inspect
+                rescue
+                    ""
+                end
+
+            raw_to_s + value
         end
 
         # Returns a representation of this type only into simple Ruby values,
