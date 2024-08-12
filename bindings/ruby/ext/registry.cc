@@ -704,8 +704,15 @@ static VALUE registry_create_null(VALUE registry, VALUE _name)
     return cxx2rb::type_wrap(*type, registry);
 }
 
+static void detach_typelib_pluginmanager(VALUE) {
+    utilmm::singleton::wrapper<Typelib::PluginManager>::detach();
+}
+
 void typelib_ruby::Typelib_init_registry()
 {
+    utilmm::singleton::wrapper<Typelib::PluginManager>::attach();
+    rb_set_end_proc(detach_typelib_pluginmanager, Qnil);
+
     VALUE mTypelib  = rb_define_module("Typelib");
     cRegistry = rb_define_class_under(mTypelib, "Registry", rb_cObject);
     eNotFound = rb_define_class_under(mTypelib, "NotFound", rb_eRuntimeError);
