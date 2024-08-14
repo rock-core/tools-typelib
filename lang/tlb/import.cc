@@ -204,18 +204,12 @@ namespace
         string indirect_name = getAttribute<string>(node.xml, "of");
         Type const* indirect = factory.build(indirect_name);
         string kind          = getAttribute<string>(node.xml, "kind");
-        bool has_size = false;
-        int size = 0;
-        try {
-            size = getAttribute<int>(node.xml, "size");
-            has_size = true;
-        }
-        catch(Parsing::MissingAttribute&) {}
+        int size = getAttribute<int>(node.xml, "size", -1);;
 
         Type const* container = &Container::createContainer(factory.getRegistry(), kind, *indirect);
         // We use zero size to indicate that the natural platform size should be
         // used
-        if (has_size && size != 0)
+        if (size > 0)
         {
             // Update the size to match the one saved in the registry. This is to
             // allow a proper call to resize() later if needed.
@@ -298,7 +292,7 @@ namespace
 
     void load(string const& file, TypeMap& map, xmlNodePtr type_node)
     {
-        string name   = getStringAttribute(type_node, "name");
+        string name   = getAttribute<std::string>(type_node, "name");
         NodeCategories cat = getCategoryFromNode(node_categories, type_node->name);
 
         TypeMap::iterator it = map.find(name);
@@ -310,9 +304,7 @@ namespace
         }
         else
         {
-            string type_file = file;
-            try { type_file = getStringAttribute(type_node, "source_id"); }
-            catch(Parsing::MissingAttribute&) {}
+            string type_file = getAttribute<std::string>(type_node, "source_id", file);
             map[name] = TypeNode(type_node, name, type_file, cat.loader);
         }
     }

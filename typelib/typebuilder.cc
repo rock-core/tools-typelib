@@ -152,6 +152,19 @@ namespace Typelib
         throw InvalidIndirectName(full_name + " does not seem to be a valid type name");
     }
 
+    TypeBuilder::TypeSpec TypeBuilder::maybeParse(const Registry& registry, const std::string& full_name)
+    {
+        ParsedTypename parsed_name = parseTypename(full_name);
+        TypeSpec spec;
+        spec.first = registry.get(parsed_name.first);
+        if (! spec.first) {
+            return spec;
+        }
+
+        spec.second = parsed_name.second;
+        return spec;
+    }
+
     TypeBuilder::TypeSpec TypeBuilder::parse(const Registry& registry, const std::string& full_name)
     {
         ParsedTypename parsed_name = parseTypename(full_name);
@@ -164,18 +177,17 @@ namespace Typelib
 
     const Type* TypeBuilder::build(Registry& registry, const std::string& full_name, int size)
     {
-        TypeSpec spec;
-        try { spec = parse(registry, full_name); }
-        catch(Undefined&) { return NULL; }
+        TypeSpec spec = maybeParse(registry, full_name);
+        if (!spec.first) {
+            return nullptr;
+        }
 
         return &build(registry, spec, size);
     }
 
     const Type* TypeBuilder::getBaseType(const Registry& registry, const std::string& full_name)
     {
-        TypeSpec spec;
-        try { spec = parse(registry, full_name); }
-        catch(Undefined&) { return NULL; }
+        TypeSpec spec = maybeParse(registry, full_name);
         return spec.first;
     }
 
