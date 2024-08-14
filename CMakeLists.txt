@@ -43,6 +43,12 @@ endif(COMMAND cmake_policy)
 add_definitions(-Wall)
 CMAKE_USE_FULL_RPATH("${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/typelib")
 
+set(ROCK_USE_SANITIZERS "" CACHE STRING "Which sanitizers to enable during the build (comma separated, compiler specific)")
+if (ROCK_USE_SANITIZERS)
+  add_compile_options("-fsanitize=${ROCK_USE_SANITIZERS}")
+  add_link_options("-fsanitize=${ROCK_USE_SANITIZERS}")
+endif()
+
 IF(APPLE)
   SET(CMAKE_INSTALL_NAME_DIR @rpath)
   SET(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
