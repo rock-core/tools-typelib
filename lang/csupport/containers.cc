@@ -18,7 +18,7 @@ string Vector::fullName(std::string const& element_name)
 { return "/std/vector<" + element_name + ">"; }
 
 Vector::Vector(Type const& on)
-    : Container("/std/vector", fullName(on.getName()), getNaturalSize(), on)
+    : Container("/std/vector", fullName(on.getName()), sizeof(std::vector<void*>), on)
     , element_layout(getElementLayout(on))
 {
 }
@@ -389,7 +389,7 @@ Container::ContainerFactory Vector::getFactory() const { return factory; }
 
 
 String::String(Type const& on)
-    : Container("/std/string", "/std/string", getNaturalSize(), on) {
+    : Container("/std/string", "/std/string", sizeof(std::string), on) {
 }
 size_t String::getElementCount(void const* ptr) const
 {
