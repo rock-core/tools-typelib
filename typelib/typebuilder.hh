@@ -68,6 +68,7 @@ namespace Typelib
         typedef std::pair<const Type*, ModifierList> TypeSpec;
 
         static ParsedTypename parseTypename(const std::string& full_name);
+        static TypeSpec maybeParse(const Registry& registry, const std::string& full_name);
         static TypeSpec parse(const Registry& registry, const std::string& full_name);
         static const Type& build(Registry& registry, const TypeSpec& spec, int size);
     };
