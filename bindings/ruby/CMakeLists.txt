@@ -1,7 +1,9 @@
 INCLUDE(RubyExtensions)
 
-if (RUBY_VERSION_MAJOR EQUAL 1 AND RUBY_VERSION_MINOR LESS 9)
-    message(FATAL_ERROR "typelib required Ruby version 1.9.3 or later")
+if (RUBY_VERSION_MAJOR EQUAL 1)
+    message(FATAL_ERROR "typelib requires Ruby version 2.5 or later")
+elseif (RUBY_VERSION_MAJOR EQUAL 2 AND RUBY_VERSION_MINOR LESS 5)
+    message(FATAL_ERROR "typelib requires Rubs version 2.5 or later")
 endif()
 
 if(YARD_EXECUTABLE)
