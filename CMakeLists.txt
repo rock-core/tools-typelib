@@ -1,6 +1,4 @@
-if(COMMAND cmake_minimum_required)
-    cmake_minimum_required(VERSION 2.4)
-endif(COMMAND cmake_minimum_required)
+cmake_minimum_required(VERSION 3.10)
 
 PROJECT(typelib)
 SET(PROJECT_VERSION 1.2)
