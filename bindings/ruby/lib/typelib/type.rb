@@ -291,6 +291,8 @@ module Typelib
 
         # Call to freeze the object, i.e. to make it readonly
         def freeze
+            apply_changes_from_converted_types
+
             freeze_children
             @__typelib_frozen = true
             self
@@ -298,6 +300,12 @@ module Typelib
 
         def frozen?
             @__typelib_frozen
+        end
+
+        def validate_not_frozen
+            return unless @__typelib_frozen
+
+            raise FrozenError, "can't modify frozen object #{self}"
         end
 
         # Call to forbid any R/W access to the underlying memory zone. This is
