@@ -92,6 +92,8 @@ module Typelib
             end
 
             def apply_changes_from_converted_types
+                return if frozen?
+
                 super()
                 self.class.converted_fields.each do |field_name|
                     value = instance_variable_get("@#{FIELD_NAME_PREFIX}#{field_name}")
@@ -180,6 +182,8 @@ module Typelib
                         converted_fields.each do |field_name|
                             attr_name = "@#{FIELD_NAME_PREFIX}#{field_name}"
                             define_method("#{field_name}=") do |value|
+                                validate_not_frozen
+
                                 instance_variable_set(attr_name, value)
                             end
                             define_method(field_name) do
